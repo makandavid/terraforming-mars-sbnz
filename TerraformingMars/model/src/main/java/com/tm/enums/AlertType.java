@@ -1,0 +1,9 @@
+package com.tm.enums;
+
+public enum AlertType {
+    CARD_BLOCKED,
+    MAYOR_THREAT,
+    GARDENER_THREAT,
+    SCIENTIST_AWARD_FAVORABLE,
+    TERRAFORMING_PACE_CRITICAL
+}
