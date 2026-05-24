@@ -1,0 +1,100 @@
+package rules;
+
+import com.tm.facts.PlayerState;
+import com.tm.facts.PlayerState;
+import com.tm.facts.PlayedCard;
+import com.tm.facts.CardInHand;
+import com.tm.facts.TilePlaced;
+import com.tm.facts.Milestone;
+import com.tm.enums.CardTag;
+import com.tm.enums.TileType;
+import com.tm.enums.MilestoneType;
+import com.tm.enums.InsightType;
+import com.tm.enums.AlertType;
+import com.tm.enums.RecommendationType;
+import com.tm.enums.Priority;
+import com.tm.output.Insight;
+import com.tm.output.Alert;
+import com.tm.output.Recommendation;
+
+rule "FC-1 Detect Science Engine Active"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        accumulate(
+            PlayedCard(playerId == $pid, $tags: tags)
+                and eval($tags.contains(CardTag.SCIENCE));
+            $count: count(1);
+            $count >= 3
+        )
+        not Insight(playerId == $pid, type == InsightType.SCIENCE_ENGINE_ACTIVE)
+    then
+        insert(new Insight($pid, InsightType.SCIENCE_ENGINE_ACTIVE,
+            "Science engine active — " + $count + " science tags played"));
+        System.out.println("[FC-1] Insight inserted: SCIENCE_ENGINE_ACTIVE for player " + $pid);
+end
+
+rule "FC-2 Detect Energy Bottleneck"
+    when
+        $player: PlayerState(currentPlayer == true, energyProduction < 2, $pid: id)
+        not Insight(playerId == $pid, type == InsightType.ENERGY_BOTTLENECK)
+    then
+        insert(new Insight($pid, InsightType.ENERGY_BOTTLENECK,
+            "Energy production " + $player.getEnergyProduction() + " < 2 — bottlneck"));
+        System.out.println("[FC-2] Insight inserted: ENERGY_BOTTLENECK for player " + $pid);
+end
+
+rule "FC-4 Detect Opponent Near Mayor"
+    when
+        $current: PlayerState(currentPlayer == true, $pid: id)
+        $opponent: PlayerState(currentPlayer == false, $oid: id)
+        accumulate(
+            TilePlaced(playerId == $oid, tileType == TileType.CITY);
+            $cityCount: count(1);
+            $cityCount >= 2
+        )
+        Milestone(type == MilestoneType.MAYOR, claimedBy == 0.0)
+        not Insight(playerId == $pid, type == InsightType.OPPONENT_NEAR_MAYOR)
+    then
+        insert(new Insight($pid, InsightType.OPPONENT_NEAR_MAYOR,
+            "Opponent " + $oid + " has " + $cityCount + " cities — Mayor milestone endangereds"));
+        System.out.println("[FC-4] Insight inserted: OPPONENT_NEAR_MAYOR, opponent has " + $cityCount + " cities");
+end
+
+rule "FC-11 Detect Blocked Card"
+    when
+        Insight($pid: playerId, type == InsightType.SCIENCE_ENGINE_ACTIVE)
+        Insight(playerId == $pid, type == InsightType.ENERGY_BOTTLENECK)
+        $card: CardInHand(playerId == $pid,
+                          requiresEnergy == true,
+                          scienceSynergyBonus == true)
+        not Alert(playerId == $pid, type == AlertType.CARD_BLOCKED)
+    then
+        insert(new Alert($pid, AlertType.CARD_BLOCKED, Priority.HIGH,
+            "Karta '" + $card.getName() + "' je blokirana — nedostaje energija za aktivaciju naučne sinergije"));
+        System.out.println("[FC-11] Alert umetnut: CARD_BLOCKED za kartu " + $card.getName());
+end
+
+rule "FC-12 Detect Mayor Threat"
+    when
+        Insight($pid: playerId, type == InsightType.OPPONENT_NEAR_MAYOR)
+        PlayerState(id == $pid, $cities: cityCount, cityCount < 2)
+        not Alert(playerId == $pid, type == AlertType.MAYOR_THREAT)
+    then
+        insert(new Alert($pid, AlertType.MAYOR_THREAT, Priority.URGENT,
+            "Mayor milestone ugrožen — igrač ima samo " + $cities + " gradova, protivnik blizu 3"));
+        System.out.println("[FC-12] Alert umetnut: MAYOR_THREAT, sopstveni gradovi: " + $cities);
+end
+
+rule "FC-17 Recommend Contest Mayor"
+    when
+        Alert($pid: playerId, type == AlertType.MAYOR_THREAT)
+        $card: CardInHand(playerId == $pid, placesCity == true)
+        not Recommendation(playerId == $pid, type == RecommendationType.PLAY_CARD,
+                           subject == $card.getName())
+    then
+        insert(new Recommendation($pid, RecommendationType.PLAY_CARD,
+            Priority.URGENT,
+            $card.getName(),
+            "Postavi grad odmah — protivnik je jednu akciju od osvajanja Mayor milestonea (5 VP, Rulebook str. 5)"));
+        System.out.println("[FC-17] Recommendation umetnut: URGENT PLAY_CARD -> " + $card.getName());
+end
