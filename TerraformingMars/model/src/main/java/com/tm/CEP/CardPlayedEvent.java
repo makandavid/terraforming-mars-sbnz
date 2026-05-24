@@ -9,8 +9,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class CardPlayedEvent extends CEP {
 
     private CardTag cardTag;
+
+    public CardPlayedEvent(double playerId, long timestamp, int generation, CardTag cardTag) {
+        super(playerId, timestamp, generation);
+        this.cardTag = cardTag;
+    }
 }

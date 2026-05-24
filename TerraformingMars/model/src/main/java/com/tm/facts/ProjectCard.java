@@ -7,14 +7,25 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ProjectCard extends Card {
 
     private CardTag synergyTag;
     private int synergyThreshold;
     private Priority recommendedPriority;
     private String recommendedText;
+
+    public ProjectCard(double id, String name, List<CardTag> tags, int cost,
+                       int vpValue, String description,
+                       CardTag synergyTag, int synergyThreshold, Priority recommendedPriority, String recommendedText) {
+        super(id, name, tags, cost, vpValue, description);
+        this.synergyTag = synergyTag;
+        this.synergyThreshold = synergyThreshold;
+        this.recommendedPriority = recommendedPriority;
+        this.recommendedText = recommendedText;
+    }
 }

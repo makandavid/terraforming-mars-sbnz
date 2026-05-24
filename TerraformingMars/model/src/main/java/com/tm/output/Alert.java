@@ -17,4 +17,9 @@ public class Alert {
     private AlertType type;
     private Priority priority;
     private String description;
+
+    @Override
+    public String toString() {
+        return "Alert[" + priority + "][player=" + playerId + ", type=" + type + "] -> " + description;
+    }
 }

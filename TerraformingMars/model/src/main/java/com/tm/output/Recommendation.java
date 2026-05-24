@@ -18,4 +18,9 @@ public class Recommendation {
     private Priority priority;
     private String subject;
     private String explanation;
+
+    @Override
+    public String toString() {
+        return "[" + priority + "] " + type + " -> " + subject + " | " + explanation;
+    }
 }

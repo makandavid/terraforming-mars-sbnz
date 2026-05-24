@@ -12,7 +12,7 @@ import lombok.Setter;
 public class PlayerState {
 
     private double id;
-    private boolean isCurrentPlayer;
+    private boolean currentPlayer;
     private int terraformRating;
     private int megacredits;
     private int mcProduction;

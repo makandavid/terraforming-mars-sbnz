@@ -15,4 +15,9 @@ public class Insight {
     private double playerId;
     private InsightType type;
     private String description;
+
+    @Override
+    public String toString() {
+        return "Insight[player=" + playerId + ", type=" + type + "] -> " + description;
+    }
 }
