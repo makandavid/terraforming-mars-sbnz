@@ -19,6 +19,7 @@ public class CardInHand extends Card {
     private boolean placesGreenery;
     private int raisesTemperature;
     private boolean scienceSynergyBonus;
+    private boolean increasesEnergyProduction;
 
     public CardInHand(double id, String name, List<CardTag> tags, int cost,
                       int vpValue, String description, double playerId) {

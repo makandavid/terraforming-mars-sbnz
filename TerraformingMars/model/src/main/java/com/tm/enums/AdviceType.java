@@ -1,6 +1,6 @@
 package com.tm.enums;
 
 public enum AdviceType {
-    ENERGY_PIVOT,
+    ENERGY_ENGINE_PIVOT,
     DEFENSIVE_GENERATION
 }

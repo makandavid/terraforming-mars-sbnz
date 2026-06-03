@@ -14,9 +14,11 @@ import com.tm.enums.InsightType;
 import com.tm.enums.AlertType;
 import com.tm.enums.RecommendationType;
 import com.tm.enums.Priority;
+import com.tm.enums.AdviceType;
 import com.tm.output.Insight;
 import com.tm.output.Alert;
 import com.tm.output.Recommendation;
+import com.tm.output.StrategicAdvice;
 import com.tm.output.TagCount;
 
 // FC LEVEL 1
@@ -33,7 +35,7 @@ rule "FC-1 Detect Science Engine Active"
     then
         insert(new Insight($pid, InsightType.SCIENCE_ENGINE_ACTIVE,
             "Science engine active — " + $scienceTags + " science tags played"));
-        System.out.println("[FC-1] Insight inserted: SCIENCE_ENGINE_ACTIVE for player " + $pid);
+        System.out.println("[FC-1] Insight: SCIENCE_ENGINE_ACTIVE for player " + $pid);
 end
 
 rule "FC-2 Detect Energy Bottleneck"
@@ -43,7 +45,7 @@ rule "FC-2 Detect Energy Bottleneck"
     then
         insert(new Insight($pid, InsightType.ENERGY_BOTTLENECK,
             "Energy production " + $player.getEnergyProduction() + " < 2 — bottlneck"));
-        System.out.println("[FC-2] Insight inserted: ENERGY_BOTTLENECK for player " + $pid);
+        System.out.println("[FC-2] Insight: ENERGY_BOTTLENECK for player " + $pid);
 end
 
 rule "FC-3 Detect MC Shortage"
@@ -53,7 +55,7 @@ rule "FC-3 Detect MC Shortage"
     then
         insert(new Insight($pid, InsightType.MC_SHORTAGE,
             "MC shortage - " + $player.getMegacredits() + "MC, average card cost is 13 MC"));
-        System.out.println("[FC-3] Insight inserted: MC_SHORTAGE for player " + $pid);
+        System.out.println("[FC-3] Insight: MC_SHORTAGE for player " + $pid);
 end
 
 rule "FC-4 Detect Opponent Near Mayor"
@@ -70,7 +72,7 @@ rule "FC-4 Detect Opponent Near Mayor"
     then
         insert(new Insight($pid, InsightType.OPPONENT_NEAR_MAYOR,
             "Opponent " + $oid + " has " + $cityCount + " cities — Mayor milestone endangered"));
-        System.out.println("[FC-4] Insight inserted: OPPONENT_NEAR_MAYOR, opponent has " + $cityCount + " cities");
+        System.out.println("[FC-4] Insight: OPPONENT_NEAR_MAYOR, opponent has " + $cityCount + " cities");
 end
 
 rule "FC-5 Detect Opponent Near Gardener"
@@ -87,7 +89,7 @@ rule "FC-5 Detect Opponent Near Gardener"
     then
         insert(new Insight($pid, InsightType.OPPONENT_NEAR_GARDENER,
             "Opponent " + $oid + " has " + $greeneryCount + " greeneries - Gardener milestone endangered"));
-        System.out.println("[FC-5] Insight inserted: OPPONENT_NEAR_GARDENER, opponent has " + $greeneryCount + " greeneries");
+        System.out.println("[FC-5] Insight: OPPONENT_NEAR_GARDENER, opponent has " + $greeneryCount + " greeneries");
 end
 
 rule "FC-6 Detect Opponent Near Builder"
@@ -104,7 +106,7 @@ rule "FC-6 Detect Opponent Near Builder"
     then
         insert(new Insight($pid, InsightType.OPPONENT_NEAR_GARDENER,
             "Opponent " + $oid + " has " + $buildingTags + " building tags - Builder milestone endangered"));
-        System.out.println("[FC-6] Insight inserted: OPPONENT_NEAR_BUILDER, opponent has " + $buildingTags + " building tags");
+        System.out.println("[FC-6] Insight: OPPONENT_NEAR_BUILDER, opponent has " + $buildingTags + " building tags");
 end
 
 rule "FC-7a Detect Self Near Terraformer"
@@ -115,7 +117,7 @@ rule "FC-7a Detect Self Near Terraformer"
     then
         insert(new Insight($pid, InsightType.SELF_NEAR_TERRAFORMER,
             "Near TERRAFORMER milestone — TR=" + $player.getTerraformRating() + ", needed 35"));
-        System.out.println("[FC-7a] Insight inserted: SELF_NEAR_TERRAFORMER (TR=" + $player.getTerraformRating() + ")");
+        System.out.println("[FC-7a] Insight: SELF_NEAR_TERRAFORMER (TR=" + $player.getTerraformRating() + ")");
 end
 
 rule "FC-7b Detect Self Near Mayor"
@@ -126,7 +128,7 @@ rule "FC-7b Detect Self Near Mayor"
     then
         insert(new Insight($pid, InsightType.SELF_NEAR_MAYOR,
             "Near MAYOR milestone — TR=" + $player.getCityCount() + ", needed 3"));
-        System.out.println("[FC-7b] Insight inserted: SELF_NEAR_MAYOR (cityCount=" + $player.getCityCount() + ")");
+        System.out.println("[FC-7b] Insight: SELF_NEAR_MAYOR (cityCount=" + $player.getCityCount() + ")");
 end
 
 rule "FC-7c Detect Self Near Gardener"
@@ -137,7 +139,7 @@ rule "FC-7c Detect Self Near Gardener"
     then
         insert(new Insight($pid, InsightType.SELF_NEAR_GARDENER,
             "Near GARDENER milestone — TR=" + $player.getGreeneryCount() + ", needed 3"));
-        System.out.println("[FC-7c] Insight inserted: SELF_NEAR_GARDENER (greeneryCount=" + $player.getGreeneryCount() + ")");
+        System.out.println("[FC-7c] Insight: SELF_NEAR_GARDENER (greeneryCount=" + $player.getGreeneryCount() + ")");
 end
 
 rule "FC-7b Detect Self Near Builder"
@@ -148,7 +150,7 @@ rule "FC-7b Detect Self Near Builder"
     then
         insert(new Insight($pid, InsightType.SELF_NEAR_BUILDER,
             "Near BUILDER milestone — TR=" + $player.getBuildingTagCount() + ", needed 8"));
-        System.out.println("[FC-7d] Insight inserted: SELF_NEAR_BUILDER (buildingTagCount=" + $player.getBuildingTagCount() + ")");
+        System.out.println("[FC-7d] Insight: SELF_NEAR_BUILDER (buildingTagCount=" + $player.getBuildingTagCount() + ")");
 end
 
 rule "FC-7e Detect Self Near Planner"
@@ -164,7 +166,7 @@ rule "FC-7e Detect Self Near Planner"
     then
         insert(new Insight($pid, InsightType.SELF_NEAR_PLANNER,
             "Near PLANNER milestone — TR=" + $cardCount + ", needed 16"));
-        System.out.println("[FC-7e] Insight inserted: SELF_NEAR_PLANNER (cardCount=" + $cardCount + ")");
+        System.out.println("[FC-7e] Insight: SELF_NEAR_PLANNER (cardCount=" + $cardCount + ")");
 end
 
 rule "FC-8 Detect Temperature Stalled"
@@ -190,7 +192,7 @@ rule "FC-9 Count Science Tags"
         not TagCount(playerId == $pid, tag == CardTag.SCIENCE)
     then
         insert(new TagCount($pid, CardTag.SCIENCE, $count));
-        System.out.println("[FC-9] TagCount inserted: player=" + $pid + " SCIENCE=" + $count);
+        System.out.println("[FC-9] TagCount: player=" + $pid + " SCIENCE=" + $count);
 end
 
 rule "FC-10 Count Building Tags"
@@ -203,7 +205,7 @@ rule "FC-10 Count Building Tags"
         not TagCount(playerId == $pid, tag == CardTag.BUILDING)
     then
         insert(new TagCount($pid, CardTag.BUILDING, $count));
-        System.out.println("[FC-10] TagCount inserted: player=" + $pid + " BUILDING=" + $count);
+        System.out.println("[FC-10] TagCount: player=" + $pid + " BUILDING=" + $count);
 end
 
 // FC LEVEL 2
@@ -219,67 +221,173 @@ rule "FC-11 Detect Blocked Card"
     then
         insert(new Alert($pid, AlertType.CARD_BLOCKED, Priority.HIGH,
             "Card '" + $card.getName() + "' is blocked — lack of energy for the science synergy activation"));
-        System.out.println("[FC-11] Alert inserted: CARD_BLOCKED for card " + $card.getName());
+        System.out.println("[FC-11] Alert: CARD_BLOCKED for card " + $card.getName());
 end
 
 rule "FC-12 Detect Mayor Threat"
     when
         Insight($pid: playerId, type == InsightType.OPPONENT_NEAR_MAYOR)
-        PlayerState(id == $pid, $cities: cityCount, cityCount < 2)
+        PlayerState(id == $pid, currentPlayer == true, $cities: cityCount, cityCount < 2)
         not Alert(playerId == $pid, type == AlertType.MAYOR_THREAT)
     then
         insert(new Alert($pid, AlertType.MAYOR_THREAT, Priority.URGENT,
             "Mayor milestone endangered — player has only " + $cities + " cities, opponent near 3"));
-        System.out.println("[FC-12] Alert inserted: MAYOR_THREAT, own cities: " + $cities);
+        System.out.println("[FC-12] Alert: MAYOR_THREAT, own cities: " + $cities);
 end
 
 rule "FC-13 Detect Gardener Threat"
     when
         Insight($pid: playerId, type == InsightType.OPPONENT_NEAR_GARDENER)
-        PlayerState(id == $pid, $greeneries: greeneryCount, greeneryCount < 2)
+        PlayerState(id == $pid, currentPlayer == true, $greeneries: greeneryCount, greeneryCount < 2)
         not Alert(playerId == $pid, type == AlertType.GARDENER_THREAT)
     then
         insert(new Alert($pid, AlertType.GARDENER_THREAT, Priority.URGENT,
             "Gardener milestone endangered — player has only " + $greeneries + " greeneries, opponent near 3"));
-        System.out.println("[FC-12] Alert inserted: GARDENER_THREAT, own greeneries: " + $greeneries);
+        System.out.println("[FC-12] Alert: GARDENER_THREAT, own greeneries: " + $greeneries);
 end
 
-//rule "FC-14a Position Evaluation for the Science Award"
-//    when
-//        TagCount($pid: playerId, tag == CardTag.SCIENCE)
-//    then
-//end
-//
-//rule "FC-14b Position Evaluation for the Science Award"
-//    when
-//        TagCount($pid: playerId, tag == CardTag.SCIENCE)
-//    then
-//end
+rule "FC-14a Scientist Award Favorable"
+    when
+        $myCount: TagCount($pid: playerId, tag == CardTag.SCIENCE, $mc: count)
+        PlayerState(id == $pid, currentPlayer == true)
+        not TagCount(tag == CardTag.SCIENCE, playerId != $pid, count > $mc)
+        not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
+    then
+        insert(new Alert($pid, AlertType.SCIENTIST_AWARD_FAVORABLE, Priority.HIGH,
+            "You are in the lead in science tags (" + $mc + ") — fund Scientist award"));
+        System.out.println("[FC-14] Alert: SCIENTIST_AWARD_FAVORABLE (science tags=" + $mc + ")");
+end
+
+rule "FC-14b Scientist Award Contested"
+    when
+        $myCount: TagCount($pid: playerId, tag == CardTag.SCIENCE, $mc: count)
+        PlayerState(id == $pid, currentPlayer == true)
+        $oppCount: TagCount(tag == CardTag.SCIENCE, playerId != $pid, $oc: count)
+        eval($oc > $mc && ($oc - $mc) <= 2)
+        not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
+        not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_CONTESTED)
+    then
+        insert(new Alert($pid, AlertType.SCIENTIST_AWARD_CONTESTED, Priority.MEDIUM,
+            "Scientist award contested — opponent is leading with " + ($oc - $mc) + " tags"));
+        System.out.println("[FC-14b] Alert: SCIENTIST_AWARD_CONTESTED (difference=" + ($oc - $mc) + ")");
+end
 
 rule "FC-15 Detect Terraforming Pace Critical"
     when
         Insight($pid: playerId, type == InsightType.TEMPERATURE_STALLED)
         GameState(generation > 7, oxygenLevel < 8)
-        PlayerState(id == $pid, $greeneries: greeneryCount, greeneryCount < 2)
         not Alert(playerId == $pid, type == AlertType.TERRAFORMING_PACE_CRITICAL)
     then
         insert(new Alert($pid, AlertType.TERRAFORMING_PACE_CRITICAL, Priority.URGENT,
-            "Terraforming pace critical"));
-        System.out.println("[FC-15] Alert inserted: Terraforming pace critical");
+            "Terraforming pace critical - temperature and oxygen level are late in generation > 7"));
+        System.out.println("[FC-15] Alert: TERRAFORMING_PACE_CRITICAL");
 end
 
 // FC LEVEL 3
+
+rule "FC-16 Recommend Energy Infrastructure"
+    when
+        Alert($pid: playerId, type == AlertType.CARD_BLOCKED)
+        $fix: CardInHand(playerId == $pid, increasesEnergyProduction == true)
+        not Recommendation(playerId == $pid, type == RecommendationType.PLAY_CARD, subject == $fix.getName())
+    then
+        insert(new Recommendation($pid, RecommendationType.PLAY_CARD, Priority.HIGH, $fix.getName(),
+            "Play '" + $fix.getName() + "' to unblock the card waiting for energy"));
+        System.out.println("[FC-16] Recommendation: HIGH PLAY_CARD -> " + $fix.getName());
+end
 
 rule "FC-17 Recommend Contest Mayor"
     when
         Alert($pid: playerId, type == AlertType.MAYOR_THREAT)
         $card: CardInHand(playerId == $pid, placesCity == true)
-        not Recommendation(playerId == $pid, type == RecommendationType.PLAY_CARD,
-                           subject == $card.getName())
+        not Recommendation(playerId == $pid, type == RecommendationType.PLAY_CARD, subject == $card.getName())
     then
-        insert(new Recommendation($pid, RecommendationType.PLAY_CARD,
-            Priority.URGENT,
-            $card.getName(),
-            "Postavi grad odmah — protivnik je jednu akciju od osvajanja Mayor milestonea (5 VP, Rulebook str. 5)"));
-        System.out.println("[FC-17] Recommendation umetnut: URGENT PLAY_CARD -> " + $card.getName());
+        insert(new Recommendation($pid, RecommendationType.PLAY_CARD, Priority.URGENT, $card.getName(),
+            "Place city now — the opponent is one action away from winning the Mayor milestone"));
+        System.out.println("[FC-17] Recommendation: URGENT PLAY_CARD -> " + $card.getName());
+end
+
+rule "FC-18 Recommend Fund Scientist Award"
+    when
+        Alert($pid: playerId, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
+        PlayerState(id == $pid, currentPlayer == true, megacredits >= 8)
+        not Recommendation(playerId == $pid, type == RecommendationType.FUND_AWARD, subject == "SCIENTIST")
+    then
+        insert(new Recommendation($pid, RecommendationType.FUND_AWARD, Priority.HIGH, "SCIENTIST",
+            "You lead in science tags — fund the Scientist award"));
+        System.out.println("[FC-18] Recommendation: HIGH FUND_AWARD -> SCIENTIST");
+end
+
+rule "FC-19 Recommend Avoid Contested Award"
+    when
+        Alert($pid: playerId, type == AlertType.SCIENTIST_AWARD_CONTESTED)
+        TagCount(playerId == $pid, tag == CardTag.SCIENCE, $mc: count)
+        TagCount(tag == CardTag.SCIENCE, playerId != $pid, $oc: count)
+        eval(($oc - $mc) > 3)
+        not Recommendation(playerId == $pid, type == RecommendationType.AVOID_AWARD, subject == "SCIENTIST")
+    then
+        insert(new Recommendation($pid, RecommendationType.AVOID_AWARD, Priority.MEDIUM, "SCIENTIST",
+            "Falling behind > 3 science tags — 14 MC for 2nd place is not profitable"));
+        System.out.println("[FC-19] Recommendation: MEDIUM AVOID_AWARD -> SCIENTIST");
+end
+
+rule "FC-20a Recommend Raise Temperature"
+    when
+        Alert($pid: playerId, type == AlertType.TERRAFORMING_PACE_CRITICAL)
+        PlayerState(id == $pid, currentPlayer == true, $heat: heat)
+        eval($heat >= 8)
+        not Recommendation(playerId == $pid, type == RecommendationType.RAISE_TEMPERATURE)
+    then
+        insert(new Recommendation($pid, RecommendationType.RAISE_TEMPERATURE, Priority.URGENT, "Heat conversion",
+            "Raise the temperature — you have " + $heat + " heat (needed 8)"));
+        System.out.println("[FC-20a] Recommendation: URGENT RAISE_TEMPERATURE (heat=" + $heat + ")");
+end
+
+rule "FC-20b Recommend Temperature Card"
+    when
+        Alert($pid: playerId, type == AlertType.TERRAFORMING_PACE_CRITICAL)
+        PlayerState(id == $pid, currentPlayer == true, heat < 8)
+        $card: CardInHand(playerId == $pid, raisesTemperature == true)
+        not Recommendation(playerId == $pid, type == RecommendationType.RAISE_TEMPERATURE)
+    then
+        insert(new Recommendation($pid, RecommendationType.RAISE_TEMPERATURE, Priority.URGENT, $card.getName(),
+            "Raise the temperature with card '" + $card.getName() + "' — terraforming pace is critical"));
+        System.out.println("[FC-20b] Recommendation: URGENT RAISE_TEMPERATURE via card -> " + $card.getName());
+end
+
+// FC LEVEL 4
+
+rule "FC-21 Strategic Energy Engine Pivot"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        accumulate(
+            Recommendation(playerId == $pid,
+                           type == RecommendationType.PLAY_CARD,
+                           priority == Priority.HIGH,
+                           $c: subject)
+                and CardInHand(playerId == $pid, name == $c, $tags: tags)
+                and eval($tags.contains(CardTag.POWER));
+            $count: count(1);
+            $count >= 3
+        )
+        not StrategicAdvice(playerId == $pid, adviceType == AdviceType.ENERGY_ENGINE_PIVOT)
+    then
+        insert(new StrategicAdvice($pid, AdviceType.ENERGY_ENGINE_PIVOT,
+            $count + " HIGH recommendations for POWER cards — dedicate this generation to the energy pivot"));
+        System.out.println("[FC-21] StrategicAdvice: ENERGY_ENGINE_PIVOT (" + $count + " power recommendations)");
+end
+
+rule "FC-22 Strategic Defensive Generation"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        accumulate(
+            Alert(playerId == $pid, priority == Priority.URGENT);
+            $urgentCount: count(1);
+            $urgentCount >= 2
+        )
+        not StrategicAdvice(playerId == $pid, adviceType == AdviceType.DEFENSIVE_GENERATION)
+    then
+        insert(new StrategicAdvice($pid, AdviceType.DEFENSIVE_GENERATION,
+            $urgentCount + " URGENT threats active — prioritize defense of milestones over development"));
+        System.out.println("[FC-22] StrategicAdvice: DEFENSIVE_GENERATION (" + $urgentCount + " URGENT alerts)");
 end
