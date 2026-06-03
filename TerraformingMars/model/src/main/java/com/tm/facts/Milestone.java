@@ -13,6 +13,7 @@ import lombok.Setter;
 public class Milestone {
 
     private MilestoneType type;
+    private boolean claimed;
     private double claimedBy;
     private int generation;
 }
