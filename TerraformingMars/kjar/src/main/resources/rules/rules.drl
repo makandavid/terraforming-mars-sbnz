@@ -1,5 +1,6 @@
 package rules;
 
+import com.tm.facts.GameState;
 import com.tm.facts.PlayerState;
 import com.tm.facts.PlayerState;
 import com.tm.facts.PlayedCard;
@@ -16,20 +17,22 @@ import com.tm.enums.Priority;
 import com.tm.output.Insight;
 import com.tm.output.Alert;
 import com.tm.output.Recommendation;
+import com.tm.output.TagCount;
+
+// FC LEVEL 1
 
 rule "FC-1 Detect Science Engine Active"
     when
         $player: PlayerState(currentPlayer == true, $pid: id)
         accumulate(
-            PlayedCard(playerId == $pid, $tags: tags)
-                and eval($tags.contains(CardTag.SCIENCE));
-            $count: count(1);
-            $count >= 3
+            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.SCIENCE));
+            $scienceTags: count(1);
+            $scienceTags >= 3
         )
         not Insight(playerId == $pid, type == InsightType.SCIENCE_ENGINE_ACTIVE)
     then
         insert(new Insight($pid, InsightType.SCIENCE_ENGINE_ACTIVE,
-            "Science engine active — " + $count + " science tags played"));
+            "Science engine active — " + $scienceTags + " science tags played"));
         System.out.println("[FC-1] Insight inserted: SCIENCE_ENGINE_ACTIVE for player " + $pid);
 end
 
@@ -43,6 +46,16 @@ rule "FC-2 Detect Energy Bottleneck"
         System.out.println("[FC-2] Insight inserted: ENERGY_BOTTLENECK for player " + $pid);
 end
 
+rule "FC-3 Detect MC Shortage"
+    when
+        $player: PlayerState(currentPlayer == true, megacredits < 10, $pid: id)
+        not Insight(playerId == $pid, type == InsightType.MC_SHORTAGE)
+    then
+        insert(new Insight($pid, InsightType.MC_SHORTAGE,
+            "MC shortage - " + $player.getMegacredits() + "MC, average card cost is 13 MC"));
+        System.out.println("[FC-3] Insight inserted: MC_SHORTAGE for player " + $pid);
+end
+
 rule "FC-4 Detect Opponent Near Mayor"
     when
         $current: PlayerState(currentPlayer == true, $pid: id)
@@ -52,13 +65,148 @@ rule "FC-4 Detect Opponent Near Mayor"
             $cityCount: count(1);
             $cityCount >= 2
         )
-        Milestone(type == MilestoneType.MAYOR, claimedBy == 0.0)
+        Milestone(type == MilestoneType.MAYOR, claimed == false)
         not Insight(playerId == $pid, type == InsightType.OPPONENT_NEAR_MAYOR)
     then
         insert(new Insight($pid, InsightType.OPPONENT_NEAR_MAYOR,
-            "Opponent " + $oid + " has " + $cityCount + " cities — Mayor milestone endangereds"));
+            "Opponent " + $oid + " has " + $cityCount + " cities — Mayor milestone endangered"));
         System.out.println("[FC-4] Insight inserted: OPPONENT_NEAR_MAYOR, opponent has " + $cityCount + " cities");
 end
+
+rule "FC-5 Detect Opponent Near Gardener"
+    when
+        $current: PlayerState(currentPlayer == true, $pid: id)
+        $opponent: PlayerState(currentPlayer == false, $oid: id)
+        accumulate(
+            TilePlaced(playerId == $oid, tileType = TileType.GREENERY);
+            $greeneryCount: count(1);
+            $greeneryCount >= 2
+        )
+        Milestone(type == MilestoneType.GARDENER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.OPPONENT_NEAR_GARDENER)
+    then
+        insert(new Insight($pid, InsightType.OPPONENT_NEAR_GARDENER,
+            "Opponent " + $oid + " has " + $greeneryCount + " greeneries - Gardener milestone endangered"));
+        System.out.println("[FC-5] Insight inserted: OPPONENT_NEAR_GARDENER, opponent has " + $greeneryCount + " greeneries");
+end
+
+rule "FC-6 Detect Opponent Near Builder"
+    when
+        $current: PlayerState(currentPlayer == true, $pid: id)
+        $opponent: PlayerState(currentPlayer == false, $oid: id)
+        accumulate(
+            PlayedCard(playerId == $oid, $tags: tags) and eval($tags.contains(CardTag.BUILDING));
+            $buildingTags: count(1);
+            $buildingTags >= 6
+        )
+        Milestone(type == MilestoneType.BUILDER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.OPPONENT_NEAR_BUILDER)
+    then
+        insert(new Insight($pid, InsightType.OPPONENT_NEAR_GARDENER,
+            "Opponent " + $oid + " has " + $buildingTags + " building tags - Builder milestone endangered"));
+        System.out.println("[FC-6] Insight inserted: OPPONENT_NEAR_BUILDER, opponent has " + $buildingTags + " building tags");
+end
+
+rule "FC-7a Detect Self Near Terraformer"
+    when
+        $player: PlayerState(currentPlayer == true, terraformRating >= 28, $pid: id)
+        Milestone(type == MilestoneType.TERRAFORMER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.SELF_NEAR_TERRAFORMER)
+    then
+        insert(new Insight($pid, InsightType.SELF_NEAR_TERRAFORMER,
+            "Near TERRAFORMER milestone — TR=" + $player.getTerraformRating() + ", needed 35"));
+        System.out.println("[FC-7a] Insight inserted: SELF_NEAR_TERRAFORMER (TR=" + $player.getTerraformRating() + ")");
+end
+
+rule "FC-7b Detect Self Near Mayor"
+    when
+        $player: PlayerState(currentPlayer == true, cityCount >= 2, $pid: id)
+        Milestone(type == MilestoneType.MAYOR, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.SELF_NEAR_MAYOR)
+    then
+        insert(new Insight($pid, InsightType.SELF_NEAR_MAYOR,
+            "Near MAYOR milestone — TR=" + $player.getCityCount() + ", needed 3"));
+        System.out.println("[FC-7b] Insight inserted: SELF_NEAR_MAYOR (cityCount=" + $player.getCityCount() + ")");
+end
+
+rule "FC-7c Detect Self Near Gardener"
+    when
+        $player: PlayerState(currentPlayer == true, greeneryCount >= 2, $pid: id)
+        Milestone(type == MilestoneType.GARDENER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.SELF_NEAR_GARDENER)
+    then
+        insert(new Insight($pid, InsightType.SELF_NEAR_GARDENER,
+            "Near GARDENER milestone — TR=" + $player.getGreeneryCount() + ", needed 3"));
+        System.out.println("[FC-7c] Insight inserted: SELF_NEAR_GARDENER (greeneryCount=" + $player.getGreeneryCount() + ")");
+end
+
+rule "FC-7b Detect Self Near Builder"
+    when
+        $player: PlayerState(currentPlayer == true, buildingTagCount >= 6, $pid: id)
+        Milestone(type == MilestoneType.BUILDER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.SELF_NEAR_BUILDER)
+    then
+        insert(new Insight($pid, InsightType.SELF_NEAR_BUILDER,
+            "Near BUILDER milestone — TR=" + $player.getBuildingTagCount() + ", needed 8"));
+        System.out.println("[FC-7d] Insight inserted: SELF_NEAR_BUILDER (buildingTagCount=" + $player.getBuildingTagCount() + ")");
+end
+
+rule "FC-7e Detect Self Near Planner"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        accumulate(
+            CardInHand(playerId == $pid);
+            $cardCount: count(1);
+            $cardCount >= 13
+        )
+        Milestone(type == MilestoneType.PLANNER, claimed == false)
+        not Insight(playerId == $pid, type == InsightType.SELF_NEAR_PLANNER)
+    then
+        insert(new Insight($pid, InsightType.SELF_NEAR_PLANNER,
+            "Near PLANNER milestone — TR=" + $cardCount + ", needed 16"));
+        System.out.println("[FC-7e] Insight inserted: SELF_NEAR_PLANNER (cardCount=" + $cardCount + ")");
+end
+
+rule "FC-8 Detect Temperature Stalled"
+    when
+        $game: GameState($gen: generation, $lastTemp: lastTempRaisedGeneration)
+        eval(($gen - $lastTemp) >= 2)
+        PlayerState(currentPlayer == true, $pid: id)
+        not Insight(playerId == $pid, type == InsightType.TEMPERATURE_STALLED)
+    then
+        int stall = $game.getGeneration() - $game.getLastTempRaisedGeneration();
+        insert(new Insight($pid, InsightType.TEMPERATURE_STALLED,
+            "Temperature stalled " + stall + " generations — last raised in generation " + $game.getLastTempRaisedGeneration()));
+        System.out.println("[FC-8] Insight: TEMPERATURE_STALLED (stalled " + stall + " generations)");
+end
+
+rule "FC-9 Count Science Tags"
+    when
+        $player: PlayerState($pid: id)
+        accumulate(
+            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.SCIENCE));
+            $count: count(1)
+        )
+        not TagCount(playerId == $pid, tag == CardTag.SCIENCE)
+    then
+        insert(new TagCount($pid, CardTag.SCIENCE, $count));
+        System.out.println("[FC-9] TagCount inserted: player=" + $pid + " SCIENCE=" + $count);
+end
+
+rule "FC-10 Count Building Tags"
+    when
+        $player: PlayerState($pid: id)
+        accumulate(
+            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.BUILDING));
+            $count: count(1)
+        )
+        not TagCount(playerId == $pid, tag == CardTag.BUILDING)
+    then
+        insert(new TagCount($pid, CardTag.BUILDING, $count));
+        System.out.println("[FC-10] TagCount inserted: player=" + $pid + " BUILDING=" + $count);
+end
+
+// FC LEVEL 2
 
 rule "FC-11 Detect Blocked Card"
     when
@@ -70,8 +218,8 @@ rule "FC-11 Detect Blocked Card"
         not Alert(playerId == $pid, type == AlertType.CARD_BLOCKED)
     then
         insert(new Alert($pid, AlertType.CARD_BLOCKED, Priority.HIGH,
-            "Karta '" + $card.getName() + "' je blokirana — nedostaje energija za aktivaciju naučne sinergije"));
-        System.out.println("[FC-11] Alert umetnut: CARD_BLOCKED za kartu " + $card.getName());
+            "Card '" + $card.getName() + "' is blocked — lack of energy for the science synergy activation"));
+        System.out.println("[FC-11] Alert inserted: CARD_BLOCKED for card " + $card.getName());
 end
 
 rule "FC-12 Detect Mayor Threat"
@@ -81,9 +229,46 @@ rule "FC-12 Detect Mayor Threat"
         not Alert(playerId == $pid, type == AlertType.MAYOR_THREAT)
     then
         insert(new Alert($pid, AlertType.MAYOR_THREAT, Priority.URGENT,
-            "Mayor milestone ugrožen — igrač ima samo " + $cities + " gradova, protivnik blizu 3"));
-        System.out.println("[FC-12] Alert umetnut: MAYOR_THREAT, sopstveni gradovi: " + $cities);
+            "Mayor milestone endangered — player has only " + $cities + " cities, opponent near 3"));
+        System.out.println("[FC-12] Alert inserted: MAYOR_THREAT, own cities: " + $cities);
 end
+
+rule "FC-13 Detect Gardener Threat"
+    when
+        Insight($pid: playerId, type == InsightType.OPPONENT_NEAR_GARDENER)
+        PlayerState(id == $pid, $greeneries: greeneryCount, greeneryCount < 2)
+        not Alert(playerId == $pid, type == AlertType.GARDENER_THREAT)
+    then
+        insert(new Alert($pid, AlertType.GARDENER_THREAT, Priority.URGENT,
+            "Gardener milestone endangered — player has only " + $greeneries + " greeneries, opponent near 3"));
+        System.out.println("[FC-12] Alert inserted: GARDENER_THREAT, own greeneries: " + $greeneries);
+end
+
+//rule "FC-14a Position Evaluation for the Science Award"
+//    when
+//        TagCount($pid: playerId, tag == CardTag.SCIENCE)
+//    then
+//end
+//
+//rule "FC-14b Position Evaluation for the Science Award"
+//    when
+//        TagCount($pid: playerId, tag == CardTag.SCIENCE)
+//    then
+//end
+
+rule "FC-15 Detect Terraforming Pace Critical"
+    when
+        Insight($pid: playerId, type == InsightType.TEMPERATURE_STALLED)
+        GameState(generation > 7, oxygenLevel < 8)
+        PlayerState(id == $pid, $greeneries: greeneryCount, greeneryCount < 2)
+        not Alert(playerId == $pid, type == AlertType.TERRAFORMING_PACE_CRITICAL)
+    then
+        insert(new Alert($pid, AlertType.TERRAFORMING_PACE_CRITICAL, Priority.URGENT,
+            "Terraforming pace critical"));
+        System.out.println("[FC-15] Alert inserted: Terraforming pace critical");
+end
+
+// FC LEVEL 3
 
 rule "FC-17 Recommend Contest Mayor"
     when
