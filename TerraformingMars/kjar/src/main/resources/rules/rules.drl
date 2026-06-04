@@ -80,7 +80,7 @@ rule "FC-5 Detect Opponent Near Gardener"
         $current: PlayerState(currentPlayer == true, $pid: id)
         $opponent: PlayerState(currentPlayer == false, $oid: id)
         accumulate(
-            TilePlaced(playerId == $oid, tileType = TileType.GREENERY);
+            TilePlaced(playerId == $oid, tileType == TileType.GREENERY);
             $greeneryCount: count(1);
             $greeneryCount >= 2
         )
@@ -185,27 +185,27 @@ end
 rule "FC-9 Count Science Tags"
     when
         $player: PlayerState($pid: id)
-        accumulate(
-            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.SCIENCE));
-            $count: count(1)
+        $count: Number() from accumulate(
+            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.SCIENCE)),
+            count(1)
         )
         not TagCount(playerId == $pid, tag == CardTag.SCIENCE)
     then
-        insert(new TagCount($pid, CardTag.SCIENCE, $count));
-        System.out.println("[FC-9] TagCount: player=" + $pid + " SCIENCE=" + $count);
+        insert(new TagCount($pid, CardTag.SCIENCE, $count.intValue()));
+        System.out.println("[FC-9] TagCount: player=" + $pid + " SCIENCE=" + $count.intValue());
 end
 
 rule "FC-10 Count Building Tags"
     when
         $player: PlayerState($pid: id)
-        accumulate(
-            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.BUILDING));
-            $count: count(1)
+        $count: Number() from accumulate(
+            PlayedCard(playerId == $pid, $tags: tags) and eval($tags.contains(CardTag.BUILDING)),
+            count(1)
         )
         not TagCount(playerId == $pid, tag == CardTag.BUILDING)
     then
-        insert(new TagCount($pid, CardTag.BUILDING, $count));
-        System.out.println("[FC-10] TagCount: player=" + $pid + " BUILDING=" + $count);
+        insert(new TagCount($pid, CardTag.BUILDING, $count.intValue()));
+        System.out.println("[FC-10] TagCount: player=" + $pid + " BUILDING=" + $count.intValue());
 end
 
 // FC LEVEL 2
@@ -288,7 +288,7 @@ end
 rule "FC-16 Recommend Energy Infrastructure"
     when
         Alert($pid: playerId, type == AlertType.CARD_BLOCKED)
-        $fix: CardInHand(playerId == $pid, increasesEnergyProduction == true)
+        $fix: CardInHand(playerId == $pid, energyProductionIncrease > 0)
         not Recommendation(playerId == $pid, type == RecommendationType.PLAY_CARD, subject == $fix.getName())
     then
         insert(new Recommendation($pid, RecommendationType.PLAY_CARD, Priority.HIGH, $fix.getName(),
