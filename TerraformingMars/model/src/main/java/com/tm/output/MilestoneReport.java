@@ -15,4 +15,11 @@ public class MilestoneReport {
     private double playerId;
     private MilestoneType milestoneType;
     private boolean reachableNow;
+    private String description;
+
+    @Override
+    public String toString() {
+        return "MilestoneReport[player=" + playerId + ", milestone=" + milestoneType +
+                ", now=" + reachableNow + "] -> " + description;
+    }
 }

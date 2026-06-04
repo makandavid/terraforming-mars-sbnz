@@ -14,7 +14,7 @@ public class TagCount {
 
     private double playerId;
     private CardTag tag;
-    private long count;
+    private int count;
 
     @Override
     public String toString() {
