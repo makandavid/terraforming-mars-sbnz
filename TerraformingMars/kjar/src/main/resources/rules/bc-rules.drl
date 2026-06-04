@@ -1,0 +1,291 @@
+package rules;
+
+import com.tm.facts.GameState;
+import com.tm.facts.PlayerState;
+import com.tm.facts.PlayedCard;
+import com.tm.facts.CardInHand;
+import com.tm.facts.TilePlaced;
+import com.tm.facts.Milestone;
+import com.tm.enums.CardTag;
+import com.tm.enums.TileType;
+import com.tm.enums.MilestoneType;
+import com.tm.enums.InsightType;
+import com.tm.enums.AlertType;
+import com.tm.enums.RecommendationType;
+import com.tm.enums.Priority;
+import com.tm.enums.AdviceType;
+import com.tm.output.Insight;
+import com.tm.output.Alert;
+import com.tm.output.Recommendation;
+import com.tm.output.StrategicAdvice;
+import com.tm.output.TagCount;
+import com.tm.output.MilestoneReport;
+
+// ============================================================
+// BC-1: canClaimMayor — Mayor milestone (3 grada)
+
+// canClaimMayor(playerId, currentCities, 3)
+// |__ currentCities >= 3 -> TRUE (bazni slucaj)
+// |__ NE -> canClaimMayor(playerId, currentCities+1, 3)
+//          |__ postoji city karta koju moze da odigra
+//          |__ standardni projekat CITY (25 MC)
+// ============================================================
+query canClaimMayor(double $playerId, int $current, int $target)
+    eval($current >= $target)
+
+    or
+    (
+        eval($current < $target)
+        and
+        PlayerState(id == $playerId, $mc : megacredits) and
+        CardInHand(playerId == $playerId, placesCity == true, cost <= $mc) and
+        canClaimMayor($playerId, $current + 1, $target;)
+    )
+    or
+    (
+        eval($current < $target)
+        and
+        PlayerState(id == $playerId, megacredits >= 25) and
+        canClaimMayor($playerId, $current + 1, $target;)
+    )
+end
+
+rule "BC-1 Mayor Reachability"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        Milestone(type == MilestoneType.MAYOR, claimedBy == 0.0)
+
+        $currentCities: Number() from accumulate(
+            TilePlaced(playerId == $pid, tileType == TileType.CITY),
+            count(1)
+        )
+
+        canClaimMayor($pid, $currentCities.intValue(), 3;)
+        not MilestoneReport(playerId == $pid, milestoneType == MilestoneType.MAYOR)
+    then
+        boolean reachableNow = $currentCities.intValue() >= 3;
+        String desc = reachableNow
+            ? "Mayor milestone reachable now — claim it before the opponent!"
+            : "Mayor milestone reachable with card in hand";
+
+        insert(new MilestoneReport($pid, MilestoneType.MAYOR, reachableNow, desc));
+        insert(new Recommendation($pid, RecommendationType.CLAIM_MILESTONE,
+        Priority.HIGH, "MAYOR", desc));
+        System.out.println("[BC-1] Mayor recursive check evaluated true.");
+end
+
+// ============================================================
+// BC-2: canClaimBuilder — Builder milestone (8 building tagova)
+//
+// canClaimBuilder(playerId, currentTags, 8)
+// |__ currentTags >= 8 -> TRUE (bazni slucaj)
+// |__ NE -> canClaimBuilder(playerId, currentTags+1, 8)
+//          |__ postoji building karta koju moze da odigra
+//
+// Napomena: Builder nema standardni projekat —
+// jedini nacin je odigravanjem building karte.
+// ============================================================
+query canClaimBuilder(double $playerId, int $current, int $target)
+
+    // Base case
+    eval($current >= $target)
+
+    or
+
+    (
+        eval($current < $target)
+        and
+        PlayerState(id == $playerId, $mc: megacredits)
+        and
+        CardInHand(
+            playerId == $playerId,
+            cost <= $mc,
+            tags contains CardTag.BUILDING
+        )
+        and
+        canClaimBuilder($playerId, $current + 1, $target;)
+    )
+
+end
+
+rule "BC-2 Builder Reachability"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        Milestone(type == MilestoneType.BUILDER, claimed == false)
+
+        TagCount(playerId == $pid, tag == CardTag.BUILDING, $currentCount: count)
+
+        canClaimBuilder($pid, $currentCount, 8;)
+
+        not MilestoneReport(playerId == $pid, milestoneType == MilestoneType.BUILDER)
+    then
+        boolean reachableNow = $currentCount >= 8;
+        String desc = reachableNow
+            ? "Builder milestone reachable now — claim it before the opponent!"
+            : "Builder milestone reachable with card in hand";
+
+        insert(new MilestoneReport($pid, MilestoneType.BUILDER, reachableNow, desc));
+        insert(new Recommendation($pid, RecommendationType.CLAIM_MILESTONE,
+            Priority.HIGH, "BUILDER", desc));
+        System.out.println("[BC-2] Builder reachable (now=" + reachableNow +
+            ", buildingTags=" + $currentCount + ")");
+end
+
+// ============================================================
+// BC-3: canClaimGardener — Gardener milestone (3 zelenila)
+//
+// canClaimGardener(playerId, currentGreens, 3)
+// |__ currentGreens >= 3 -> TRUE (bazni slucaj)
+// |__ NE -> canClaimGardener(playerId, currentGreens+1, 3)
+//          |__ postoji greenery karta (dovoljno biljaka/MC)
+//          |__ standardni projekat GREENERY (8 biljaka)
+// ============================================================
+query canClaimGardener(double $playerId, int $current, int $target)
+    eval($current >= $target)
+
+    or
+    (
+        eval($current < $target)
+        and
+        PlayerState(id == $playerId, $mc: megacredits)
+        and
+        CardInHand(playerId == $playerId, placesGreenery == true, cost <= $mc)
+        and
+        canClaimGardener($playerId, $current + 1, $target;)
+    )
+    or
+    (
+        eval($current < $target)
+        and
+        PlayerState(id == $playerId, plants >= 8)
+        and
+        canClaimGardener($playerId, $current + 1, $target;)
+    )
+end
+
+rule "BC-3 Gardener Reachability"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        Milestone(type == MilestoneType.GARDENER, claimed == false)
+        $currentGreens: Number() from accumulate(
+            TilePlaced(playerId == $pid, tileType == TileType.GREENERY),
+            count(1)
+        )
+        canClaimGardener($pid, $currentGreens.intValue(), 3;)
+        not MilestoneReport(playerId == $pid, milestoneType == MilestoneType.GARDENER)
+    then
+        boolean reachableNow = $currentGreens.intValue() >= 3;
+        String desc = reachableNow
+            ? "Gardener milestone reachable now — claim it before the opponent!"
+            : "Gardener milestone reachable with card in hand or standard project";
+
+        insert(new MilestoneReport($pid, MilestoneType.GARDENER, reachableNow, desc));
+        insert(new Recommendation($pid, RecommendationType.CLAIM_MILESTONE,
+            Priority.HIGH, "GARDENER", desc));
+        System.out.println("[BC-3] Gardener reachable (now=" + reachableNow +
+            ", greens=" + $currentGreens.intValue() + ")");
+end
+
+// ============================================================
+// BC-4: canWinScientist — Scientist nagrada (najvise SCIENCE tagova)
+//
+// canWinScientist(playerId, myCount, opponentMax)
+// |__ myCount > opponentMax -> TRUE (bazni slucaj)
+// |__ NE -> canWinScientist(playerId, myCount+1, opponentMax)
+//          |__ postoji science karta koju moze da odigra
+// ============================================================
+query canWinScientist(double $playerId, int $myCount, int $opponentMax)
+    eval($myCount > $opponentMax)
+
+    or
+    (
+        eval($myCount <= $opponentMax)
+        and
+        PlayerState(id == $playerId, $mc: megacredits)
+        and
+        CardInHand(playerId == $playerId,
+               cost <= $mc,
+               tags contains CardTag.SCIENCE
+        )
+        and
+        canWinScientist($playerId, $myCount + 1, $opponentMax;)
+    )
+end
+
+rule "BC-4 Scientist Award Winnable"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        TagCount(playerId == $pid,
+                 tag == CardTag.SCIENCE,
+                 $myCount: count)
+        $oppMax: Number() from accumulate(
+            TagCount(playerId != $pid,
+                     tag == CardTag.SCIENCE,
+                     $oc: count),
+            max($oc)
+        )
+        canWinScientist($pid, $myCount, $oppMax.intValue();)
+        PlayerState(id == $pid, megacredits >= 8)
+        not Recommendation(playerId == $pid,
+                           type == RecommendationType.FUND_AWARD,
+                           subject == "SCIENTIST")
+    then
+        insert(new Recommendation($pid, RecommendationType.FUND_AWARD,
+            Priority.HIGH, "SCIENTIST",
+            "You lead or can lead in science tags — finance the Scientist award"));
+        System.out.println("[BC-4] Recommendation: HIGH FUND_AWARD SCIENTIST" +
+            " (myCount=" + $myCount +
+            ", oppMax=" + $oppMax.intValue() + ")");
+end
+
+// ============================================================
+// BC-5: canWinBanker — Banker nagrada (najvisa MC produkcija)
+//
+// canWinBanker(playerId, myProduction, opponentMax)
+// |__ myProduction > opponentMax -> TRUE (bazni slucaj)
+// |__ NE -> canWinBanker(playerId, myProduction+increase, opponentMax)
+//          |__ postoji production karta
+//              sa konkretnim iznosom povecanja
+// ============================================================
+query canWinBanker(double $playerId, int $myProd, int $opponentMax)
+    eval($myProd > $opponentMax)
+
+    or
+    (
+        eval($myProd <= $opponentMax)
+        and
+        PlayerState(id == $playerId, $mc: megacredits)
+        and
+        CardInHand(playerId == $playerId,
+                   $mcIncrease: mcProductionIncrease,
+                   cost <= $mc,
+                   mcProductionIncrease > 0)
+        and
+        $nextProd : Integer() from ($myProd + $mcIncrease)
+        and
+        canWinBanker($playerId, $nextProd, $opponentMax;)
+    )
+end
+
+rule "BC-5 Banker Award Winnable"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id, $myProd: mcProduction)
+
+        // Maksimalna MC produkcija protivnika
+        $oppMax: Number() from accumulate(
+            PlayerState(id != $pid, $op: mcProduction),
+            max($op)
+        )
+
+        $oppMaxInt: Integer() from $oppMax.intValue()
+        canWinBanker($pid, $myProd, $oppMaxInt;)
+
+        PlayerState(id == $pid, megacredits >= 8)
+        not Recommendation(playerId == $pid, type == RecommendationType.FUND_AWARD, subject == "BANKER")
+    then
+        insert(new Recommendation($pid, RecommendationType.FUND_AWARD,
+            Priority.HIGH, "BANKER",
+            "You lead or can lead in MC production — finance the Banker award"));
+        System.out.println("[BC-5] Recommendation: HIGH FUND_AWARD BANKER (myProd=" + $myProd +
+            ", oppMax=" + $oppMaxInt + ")");
+end
