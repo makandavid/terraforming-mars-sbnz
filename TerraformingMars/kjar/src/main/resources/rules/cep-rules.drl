@@ -1,0 +1,152 @@
+package rules;
+
+import com.tm.CEP.CardPlayedEvent;
+import com.tm.CEP.TilePlayedEvent;
+import com.tm.CEP.TempRaisedEvent;
+import com.tm.facts.GameState;
+import com.tm.facts.PlayerState;
+import com.tm.facts.CardInHand;
+import com.tm.enums.CardTag;
+import com.tm.enums.TileType;
+import com.tm.enums.InsightType;
+import com.tm.enums.ThreatType;
+import com.tm.enums.Priority;
+import com.tm.output.ThreatAlert;
+import com.tm.output.Insight;
+
+declare CardPlayedEvent
+    @role(event)
+    @timestamp(timestamp)
+end
+
+declare TilePlayedEvent
+    @role(event)
+    @timestamp(timestamp)
+end
+
+declare TempRaisedEvent
+    @role(event)
+    @timestamp(timestamp)
+end
+
+// ============================================================
+// CEP-1: Detekcija science rush-a protivnika
+//
+// Ako protivnik odigra 3+ science karata u poslednjih 2 generacije
+// (sliding window = 2000ms jer je 1 generacija = 1000ms),
+// detektuje se namerni science rush.
+//
+// Staticko pravilo ne moze ovo detektovati jer vidi samo ukupan
+// broj tagova bez informacije o vremenskom ubrzanju.
+// ============================================================
+rule "CEP-1 Detect Science Rush"
+    when
+        $currentPlayer: PlayerState(currentPlayer == true, $pid: id)
+        $opponent: PlayerState(currentPlayer == false, $oid: id)
+
+        $count: Number(intValue >= 3) from accumulate(
+            $e: CardPlayedEvent(
+                playerId == $oid,
+                cardTag == CardTag.SCIENCE
+            ) over window:time(2000ms),
+            count($e)
+        )
+
+        not ThreatAlert(targetPlayerId == $pid, sourcePlayerId == $oid, type == ThreatType.SCIENCE_RUSH)
+    then
+        insert(new ThreatAlert($pid, $oid, ThreatType.SCIENCE_RUSH,
+            "Opponent played " + $count.intValue() + "+ science cards in 2 generations " +
+            "— detected sped up accumulation of science tags"));
+        System.out.println("[CEP-1] ThreatAlert: SCIENCE_RUSH (count=" + $count.intValue() + ")");
+end
+
+// ============================================================
+// CEP-2: Detekcija Mayor rush-a protivnika (sekvenca dogadjaja)
+//
+// Dva grada postavljena u dve bliske generacije (razlika <= 2)
+// je namerni Mayor rush obrazac.
+//
+// Staticko pravilo vidi samo ukupan broj gradova bez vremenskog
+// redosleda — CEP je neophodan za detekciju ovog obrasca.
+// ============================================================
+rule "CEP-2 Detect Mayor Rush"
+    when
+        $currentPlayer: PlayerState(currentPlayer == true, $pid: id)
+        $opponent: PlayerState(currentPlayer == false, $oid: id)
+
+        $e1: TilePlayedEvent(
+            playerId == $oid,
+            tileType == TileType.CITY,
+            $g1: generation
+        )
+
+        $e2: TilePlayedEvent(
+            playerId == $oid,
+            tileType == TileType.CITY,
+            $g2: generation,
+            generation > $g1,
+            generation - $g1 <= 2
+        )
+
+        not ThreatAlert(targetPlayerId == $pid, sourcePlayerId == $oid, type == ThreatType.MAYOR_RUSH)
+    then
+        insert(new ThreatAlert($pid, $oid, ThreatType.MAYOR_RUSH,
+            "Opponent placed city in generation " + $g1 + " and " + $g2 +
+            " — Mayor milestone reachable in next generation"));
+        System.out.println("[CEP-2] ThreatAlert: MAYOR_RUSH (gen " + $g1 + " -> " + $g2 + ")");
+end
+
+// ============================================================
+// CEP-3: Detekcija izgubljenog temperaturnog tempa (odsustvo dogadjaja)
+//
+// Ako nijedan TemperatureRaisedEvent nije zabelezen u poslednjih
+// 2 generacije, a igrac ima heat karte u ruci, igrac propusta prilike.
+//
+// Odsustvo dogadjaja u vremenskom intervalu je fundamentalno
+// nemoguce detektovati statickim pravilom.
+// ============================================================
+rule "CEP-3a Detect Heat Tempo Lost (Heat Stock)"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id, $mc: megacredits)
+        GameState($currentGen: generation)
+
+        not TempRaisedEvent(
+            playerId == $pid
+        ) over window:time(2000ms)
+
+        $heatStock : PlayerState(
+            id == $pid,
+            heat >= 8
+        )
+
+        not Insight(playerId == $pid, type == InsightType.TEMPERATURE_STALLED)
+    then
+        insert(new Insight($pid, InsightType.TEMPERATURE_STALLED,
+            "Temperature stalled " + $currentGen + " generations with heat cards in hand — heat available for conversion"));
+        System.out.println("[CEP-3a] Insight: TEMPERATURE_STALLED (gen=" + $currentGen + ")");
+end
+
+rule "CEP-3b Detect Heat Tempo Lost (Heat Cards)"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id, $mc: megacredits)
+        GameState($currentGen: generation)
+
+        not TempRaisedEvent(
+            playerId == $pid
+        ) over window:time(2000ms)
+
+        $cardCount: Number(intValue >= 1) from accumulate(
+            CardInHand(
+                playerId == $pid,
+                raisesTemperature == true,
+                cost <= $mc
+            ),
+            count(1)
+        )
+
+        not Insight(playerId == $pid, type == InsightType.TEMPERATURE_STALLED)
+    then
+        insert(new Insight($pid, InsightType.TEMPERATURE_STALLED,
+            "Temperature stalled " + $currentGen + " generations with heat cards in hand — heat cards available"));
+        System.out.println("[CEP-3b] Insight: TEMPERATURE_STALLED (gen=" + $currentGen + ")");
+end

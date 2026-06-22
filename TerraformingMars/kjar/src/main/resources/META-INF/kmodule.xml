@@ -1,5 +1,5 @@
 <kmodule xmlns="http://www.drools.org/xsd/kmodule">
-    <kbase name="tm-rules" packages="rules">
-        <ksession name="tm-session" type="stateful"/>
+    <kbase name="tm-rules" packages="rules" eventProcessingMode="stream">
+        <ksession name="tm-session" type="stateful" clockType="pseudo"/>
     </kbase>
 </kmodule>
