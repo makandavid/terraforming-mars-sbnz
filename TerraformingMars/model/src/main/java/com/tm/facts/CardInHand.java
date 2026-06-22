@@ -13,37 +13,37 @@ import java.util.List;
 @NoArgsConstructor
 public class CardInHand extends Card {
 
-    private double playerId;
+    private long playerId;
 
-    // --- Efekti na produkciju (koliko se menja po generaciji) ---
-    private int mcProductionIncrease;       // povecanje MC produkcije
-    private int energyProductionIncrease;   // povecanje energetske produkcije
-    private int heatProductionIncrease;     // povecanje produkcije toplote
-    private int steelProductionIncrease;    // povecanje produkcije celika
-    private int titaniumProductionIncrease; // povecanje produkcije titanijuma
-    private int plantProductionIncrease;    // povecanje produkcije biljaka
+    // effects on production
+    private int mcProductionIncrease;
+    private int energyProductionIncrease;
+    private int heatProductionIncrease;
+    private int steelProductionIncrease;
+    private int titaniumProductionIncrease;
+    private int plantProductionIncrease;
 
-    // --- Efekti na globalne parametre ---
-    private int temperatureIncrease;  // koliko stepeni podiZe temperaturu
-    private int oxygenIncrease;       // koliko % podiZe kiseonik
-    private int oceansPlaced;         // koliko okeana postavlja
+    // effects on global parameters
+    private int temperatureIncrease;
+    private int oxygenIncrease;
+    private int oceansPlaced;
 
-    // --- Efekti na plocice ---
+    // effects on tiles
     private boolean placesCity;
     private boolean placesGreenery;
 
-    // --- Preduslovi za igranje ---
-    private boolean requiresEnergy;          // zahteva energiju za aktivaciju
-    private int minTemperature;              // minimalna temperatura za igranje
-    private int minOxygen;                   // minimalni kiseonik za igranje
-    private int requiredScienceTags;         // min broj science tagova
+    // conditions for playing
+    private boolean requiresEnergy;
+    private int minTemperature;
+    private int minOxygen;
+    private int requiredScienceTags;
 
-    // --- Sinergije relevantne za pravila ---
-    private boolean scienceSynergyBonus;     // ima bonus uz science tagove
-    private boolean raisesTemperature;       // podiZe temperaturu kao efekat
+    // synergies for relevant rules
+    private boolean scienceSynergyBonus;
+    private boolean raisesTemperature;
 
-    public CardInHand(double id, String name, List<CardTag> tags, int cost,
-                      int vpValue, String description, double playerId) {
+    public CardInHand(long id, String name, List<CardTag> tags, int cost,
+                      int vpValue, String description, long playerId) {
         super(id, name, tags, cost, vpValue, description);
         this.playerId = playerId;
     }

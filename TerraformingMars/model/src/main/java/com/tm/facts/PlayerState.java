@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PlayerState {
 
-    private double id;
+    private long id;
     private boolean currentPlayer;
     private int terraformRating;
     private int megacredits;

@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public abstract class CEP {
 
-    private double playerId;
+    private long playerId;
     private long timestamp;
     private int generation;
 }

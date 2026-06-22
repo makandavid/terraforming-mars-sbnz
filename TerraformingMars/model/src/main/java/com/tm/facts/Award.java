@@ -13,6 +13,7 @@ import lombok.Setter;
 public class Award {
 
     private AwardType type;
-    private double fundedBy;
+    private boolean funded;
+    private long fundedBy;
     private int cost;
 }

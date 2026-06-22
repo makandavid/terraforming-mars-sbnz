@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Alert {
 
-    private double playerId;
+    private long playerId;
     private AlertType type;
     private Priority priority;
     private String description;

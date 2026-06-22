@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Recommendation {
 
-    private double playerId;
+    private long playerId;
     private RecommendationType type;
     private Priority priority;
     private String subject;

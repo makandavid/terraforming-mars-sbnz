@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ThreatAlert {
 
-    private double targetPlayerId;
+    private long targetPlayerId;
     private ThreatType type;
     private String description;
 }

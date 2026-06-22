@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class StrategicAdvice {
 
-    private double playerId;
+    private long playerId;
     private AdviceType adviceType;
     private String explanation;
 }

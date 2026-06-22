@@ -13,12 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 public class PlayedCard extends Card {
 
-    private double playerId;
+    private long playerId;
     private int generationPlayed;
 
-    public PlayedCard(double id, String name, List<CardTag> tags, int cost,
+    public PlayedCard(long id, String name, List<CardTag> tags, int cost,
                       int vpValue, String description,
-                      double playerId, int generationPlayed) {
+                      long playerId, int generationPlayed) {
         super(id, name, tags, cost, vpValue, description);
         this.playerId = playerId;
         this.generationPlayed = generationPlayed;

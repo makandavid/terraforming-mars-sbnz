@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MilestoneReport {
 
-    private double playerId;
+    private long playerId;
     private MilestoneType milestoneType;
     private boolean reachableNow;
     private String description;

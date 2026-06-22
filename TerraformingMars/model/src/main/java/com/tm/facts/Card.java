@@ -14,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public abstract class Card {
 
-    private double id;
-    private  String name;
+    private long id;
+    private String name;
     private List<CardTag> tags;
     private int cost;
     private int vpValue;

@@ -14,6 +14,6 @@ public class Milestone {
 
     private MilestoneType type;
     private boolean claimed;
-    private double claimedBy;
+    private long claimedBy;
     private int generation;
 }

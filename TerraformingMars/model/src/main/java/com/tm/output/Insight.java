@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Insight {
 
-    private double playerId;
+    private long playerId;
     private InsightType type;
     private String description;
 

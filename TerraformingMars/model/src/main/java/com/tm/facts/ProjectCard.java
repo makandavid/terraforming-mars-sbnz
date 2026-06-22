@@ -19,7 +19,7 @@ public class ProjectCard extends Card {
     private Priority recommendedPriority;
     private String recommendedText;
 
-    public ProjectCard(double id, String name, List<CardTag> tags, int cost,
+    public ProjectCard(long id, String name, List<CardTag> tags, int cost,
                        int vpValue, String description,
                        CardTag synergyTag, int synergyThreshold, Priority recommendedPriority, String recommendedText) {
         super(id, name, tags, cost, vpValue, description);

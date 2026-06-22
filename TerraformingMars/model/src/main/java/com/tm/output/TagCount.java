@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TagCount {
 
-    private double playerId;
+    private long playerId;
     private CardTag tag;
     private int count;
 

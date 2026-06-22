@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TempRaisedEvent extends CEP {
 
-    public TempRaisedEvent(double playerId, long timestamp, int generation) {
+    public TempRaisedEvent(long playerId, long timestamp, int generation) {
         super(playerId, timestamp, generation);
     }
 }

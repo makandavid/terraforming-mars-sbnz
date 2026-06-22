@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ScoreProjection {
 
-    private double playerId;
+    private long playerId;
     private int trPoints;
     private int cardVP;
     private int milestoneVP;
