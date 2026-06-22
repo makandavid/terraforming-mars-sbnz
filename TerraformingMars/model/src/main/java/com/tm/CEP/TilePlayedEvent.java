@@ -12,8 +12,8 @@ public class TilePlayedEvent extends CEP {
 
     private TileType tileType;
 
-    public TilePlayedEvent(long playerId, long timestamp, int generation, TileType tileType) {
-        super(playerId, timestamp, generation);
+    public TilePlayedEvent(long playerId, int generation, TileType tileType) {
+        super(playerId, generation);
         this.tileType = tileType;
     }
 }

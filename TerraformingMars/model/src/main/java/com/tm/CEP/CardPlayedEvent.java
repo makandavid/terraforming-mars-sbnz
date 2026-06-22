@@ -13,8 +13,8 @@ public class CardPlayedEvent extends CEP {
 
     private CardTag cardTag;
 
-    public CardPlayedEvent(long playerId, long timestamp, int generation, CardTag cardTag) {
-        super(playerId, timestamp, generation);
+    public CardPlayedEvent(long playerId, int generation, CardTag cardTag) {
+        super(playerId, generation);
         this.cardTag = cardTag;
     }
 }

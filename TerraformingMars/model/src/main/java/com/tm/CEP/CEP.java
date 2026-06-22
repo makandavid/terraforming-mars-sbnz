@@ -8,10 +8,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public abstract class CEP {
 
     private long playerId;
     private long timestamp;
     private int generation;
+
+    public CEP(long playerId, int generation) {
+        this.playerId = playerId;
+        this.generation = generation;
+        this.timestamp = generation * 1000L;
+    }
 }
