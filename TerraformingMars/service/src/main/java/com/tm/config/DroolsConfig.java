@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DroolsConfig {
 
-    private static final String SESSION_NAME = "tm-session";
+//    private static final String SESSION_NAME = "tm-session";
 
     @Bean
     public KieContainer kieContainer() {
@@ -17,8 +17,8 @@ public class DroolsConfig {
         return ks.getKieClasspathContainer();
     }
 
-    @Bean
-    public KieSession kieSession(KieContainer kieContainer) {
-        return kieContainer.newKieSession(SESSION_NAME);
-    }
+//    @Bean
+//    public KieSession kieSession(KieContainer kieContainer) {
+//        return kieContainer.newKieSession(SESSION_NAME);
+//    }
 }
