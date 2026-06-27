@@ -37,20 +37,49 @@ public class CardService {
                 playerId
         );
 
-        card.setPlacesCity(entity.isPlacesCity());
-        card.setPlacesGreenery(entity.isPlacesGreenery());
-        card.setRequiresEnergy(entity.isRequiresEnergy());
-        card.setRaisesTemperature(entity.isRaisesTemperature());
-        card.setScienceSynergyBonus(entity.isScienceSynergyBonus());
+        // --- Flat Resource Increases ---
+        card.setMcIncrease(entity.getMcIncrease());
+        card.setEnergyIncrease(entity.getEnergyIncrease());
+        card.setHeatIncrease(entity.getHeatIncrease());
+        card.setSteelIncrease(entity.getSteelIncrease());
+        card.setTitaniumIncrease(entity.getTitaniumIncrease());
+        card.setPlantIncrease(entity.getPlantIncrease());
+
+        // --- Production Increases ---
         card.setMcProductionIncrease(entity.getMcProductionIncrease());
         card.setEnergyProductionIncrease(entity.getEnergyProductionIncrease());
         card.setHeatProductionIncrease(entity.getHeatProductionIncrease());
         card.setSteelProductionIncrease(entity.getSteelProductionIncrease());
         card.setTitaniumProductionIncrease(entity.getTitaniumProductionIncrease());
         card.setPlantProductionIncrease(entity.getPlantProductionIncrease());
+
+        // --- Global Parameter Effects ---
         card.setTemperatureIncrease(entity.getTemperatureIncrease());
         card.setOxygenIncrease(entity.getOxygenIncrease());
         card.setOceansPlaced(entity.getOceansPlaced());
+        card.setTerraformRatingIncrease(entity.getTerraformRatingIncrease());
+
+        // --- Map Actions & Bonuses ---
+        card.setPlacesCity(entity.isPlacesCity());
+        card.setPlacesGreenery(entity.isPlacesGreenery());
+        card.setRaisesTemperature(entity.isRaisesTemperature());
+        card.setScienceSynergyBonus(entity.isScienceSynergyBonus());
+
+        // --- Requirements ---
+        card.setRequiresEnergy(entity.isRequiresEnergy());
+        card.setMinTemperature(entity.getMinTemperature());
+        card.setMaxTemperature(entity.getMaxTemperature());
+        card.setMinOxygen(entity.getMinOxygen());
+        card.setMaxOxygen(entity.getMaxOxygen());
+        card.setMinOceansPlaced(entity.getMinOceansPlaced());
+        card.setMaxOceansPlaced(entity.getMaxOceansPlaced());
+        card.setMinGreeneryTiles(entity.getMinGreeneryTiles());
+        card.setMaxGreeneryTiles(entity.getMaxGreeneryTiles());
+        card.setRequiredScienceTags(entity.getRequiredScienceTags());
+        card.setRequiredJovianTags(entity.getRequiredJovianTags());
+        card.setRequiredPlantTags(entity.getRequiredPlantTags());
+        card.setRequiredMicrobeTags(entity.getRequiredMicrobeTags());
+        card.setRequiredAnimalTags(entity.getRequiredAnimalTags());
 
         return card;
     }

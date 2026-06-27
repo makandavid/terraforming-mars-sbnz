@@ -11,21 +11,20 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 public class AdvisorService {
 
-    private final KieContainer kieContainer;
     private final GameStateMapper gameStateMapper;
+    private final TemplateRuleService templateRuleService;
 
-    public AdvisorService(KieContainer kieContainer, GameStateMapper gameStateMapper) {
-        this.kieContainer = kieContainer;
+    public AdvisorService(GameStateMapper gameStateMapper, TemplateRuleService templateRuleService) {
         this.gameStateMapper = gameStateMapper;
+        this.templateRuleService = templateRuleService;
     }
 
     public AnalysisResponse analyze(GameStateRequest request) {
-        KieSession kieSession = kieContainer.newKieSession("tm-session");
+        KieSession kieSession = templateRuleService.newSessionWithTemplates();
 
         try {
             SessionPseudoClock clock = kieSession.getSessionClock();

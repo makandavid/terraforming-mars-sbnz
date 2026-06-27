@@ -6,7 +6,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "card")
+@Table(name = "cards")
 @Getter
 @Setter
 public class CardEntity {
@@ -29,6 +29,13 @@ public class CardEntity {
     @Column
     private int vpValue;
 
+    @Column private int mcIncrease;
+    @Column private int energyIncrease;
+    @Column private int heatIncrease;
+    @Column private int steelIncrease;
+    @Column private int titaniumIncrease;
+    @Column private int plantIncrease;
+
     @Column private int mcProductionIncrease;
     @Column private int energyProductionIncrease;
     @Column private int heatProductionIncrease;
@@ -39,15 +46,25 @@ public class CardEntity {
     @Column private int temperatureIncrease;
     @Column private int oxygenIncrease;
     @Column private int oceansPlaced;
+    @Column private int terraformRatingIncrease;
 
     @Column private boolean placesCity;
     @Column private boolean placesGreenery;
-    @Column private boolean requiresEnergy;
     @Column private boolean raisesTemperature;
     @Column private boolean scienceSynergyBonus;
 
+    @Column private boolean requiresEnergy;
     @Column private int minTemperature;
+    @Column private int maxTemperature;
     @Column private int minOxygen;
+    @Column private int maxOxygen;
+    @Column private int minOceansPlaced;
+    @Column private int maxOceansPlaced;
+    @Column private int minGreeneryTiles;
+    @Column private int maxGreeneryTiles;
     @Column private int requiredScienceTags;
-
+    @Column private int requiredJovianTags;
+    @Column private int requiredPlantTags;
+    @Column private int requiredMicrobeTags;
+    @Column private int requiredAnimalTags;
 }

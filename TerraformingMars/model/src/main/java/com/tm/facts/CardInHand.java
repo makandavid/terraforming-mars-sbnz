@@ -15,6 +15,14 @@ public class CardInHand extends Card {
 
     private long playerId;
 
+    // effects on resources
+    private int mcIncrease;
+    private int energyIncrease;
+    private int heatIncrease;
+    private int steelIncrease;
+    private int titaniumIncrease;
+    private int plantIncrease;
+
     // effects on production
     private int mcProductionIncrease;
     private int energyProductionIncrease;
@@ -27,6 +35,7 @@ public class CardInHand extends Card {
     private int temperatureIncrease;
     private int oxygenIncrease;
     private int oceansPlaced;
+    private int terraformRatingIncrease;
 
     // effects on tiles
     private boolean placesCity;
@@ -35,8 +44,18 @@ public class CardInHand extends Card {
     // conditions for playing
     private boolean requiresEnergy;
     private int minTemperature;
+    private int maxTemperature;
     private int minOxygen;
+    private int maxOxygen;
+    private int minOceansPlaced;
+    private int maxOceansPlaced;
+    private int minGreeneryTiles;
+    private int maxGreeneryTiles;
     private int requiredScienceTags;
+    private int requiredJovianTags;
+    private int requiredPlantTags;
+    private int requiredMicrobeTags;
+    private int requiredAnimalTags;
 
     // synergies for relevant rules
     private boolean scienceSynergyBonus;
