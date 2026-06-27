@@ -1,0 +1,55 @@
+template header
+cardName
+requiredTag
+threshold
+priority
+effectText
+
+package rules;
+
+import com.tm.facts.PlayerState;
+import com.tm.facts.PlayedCard;
+import com.tm.facts.CardInHand;
+import com.tm.enums.CardTag;
+import com.tm.enums.RecommendationType;
+import com.tm.enums.Priority;
+import com.tm.output.Recommendation;
+
+template "CardSynergy"
+
+// Auto-generisano pravilo za kartu @{cardName}
+// Sinergija: @{threshold}+ @{requiredTag} tagova
+rule "Template-Synergy-@{cardName}-@{requiredTag}"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+
+        // Karta se nalazi u ruci igraca
+        CardInHand(playerId == $pid, name == "@{cardName}")
+
+        // Igrac ima dovoljno tagova za sinergiju
+        $count: Number(intValue >= @{threshold}) from accumulate(
+            PlayedCard(
+                playerId == $pid,
+                tags contains CardTag.@{requiredTag}
+            ),
+            count(1)
+        )
+
+        // Preporuka jos nije generisana za ovu kartu/tag kombinaciju
+        not Recommendation(
+            playerId == $pid,
+            type == RecommendationType.ACTION_ENABLED_BY_CARD_CONDITION,
+            subject == "@{cardName}"
+        )
+    then
+        insert(new Recommendation(
+            $pid,
+            RecommendationType.ACTION_ENABLED_BY_CARD_CONDITION,
+            Priority.@{priority},
+            "@{cardName}",
+            "@{effectText} (currently you have " + $count.intValue() + " @{requiredTag} tags)"
+        ));
+        System.out.println("[TEMPLATE] Synergy: @{cardName} (@{requiredTag} >= @{threshold}, count=" + $count.intValue() + ")");
+end
+
+end template
