@@ -68,7 +68,7 @@ export function ResultsPanel({ result, loading, error }: Props) {
                   style={{ background: m.reachableNow ? '#2ecc71' : '#f39c12' }}>
                   {m.reachableNow ? 'NOW' : 'SOON'}
                 </span>
-                <span className="result-subject">{m.milestone}</span>
+                <span className="result-subject">{m.milestoneType}</span>
               </div>
               <p className="result-explanation">{m.description}</p>
             </div>

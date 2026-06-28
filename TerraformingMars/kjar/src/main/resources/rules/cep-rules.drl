@@ -30,14 +30,14 @@ declare TempRaisedEvent
 end
 
 // ============================================================
-// CEP-1: Detekcija science rush-a protivnika
+// CEP-1: Detection of enemy science rush
 //
-// Ako protivnik odigra 3+ science karata u poslednjih 2 generacije
-// (sliding window = 2000ms jer je 1 generacija = 1000ms),
-// detektuje se namerni science rush.
+// If the opponent plays 3+ science cards in the last 2 generations
+// (sliding window = 2000ms because 1 generation = 1000ms),
+// an intentional science rush is detected.
 //
-// Staticko pravilo ne moze ovo detektovati jer vidi samo ukupan
-// broj tagova bez informacije o vremenskom ubrzanju.
+// The static rule cannot detect this because it only sees the total
+// number of tags without time acceleration information.
 // ============================================================
 rule "CEP-1 Detect Science Rush"
     when
@@ -61,13 +61,13 @@ rule "CEP-1 Detect Science Rush"
 end
 
 // ============================================================
-// CEP-2: Detekcija Mayor rush-a protivnika (sekvenca dogadjaja)
+// CEP-2: Detection of the opponent's Mayor rush (sequence of events)
 //
-// Dva grada postavljena u dve bliske generacije (razlika <= 2)
-// je namerni Mayor rush obrazac.
+// Two cities placed in two close generations (difference <= 2)
+// is an intentional Mayor rush pattern.
 //
-// Staticko pravilo vidi samo ukupan broj gradova bez vremenskog
-// redosleda — CEP je neophodan za detekciju ovog obrasca.
+// The static rule only sees the total number of cities without the time
+// order — CEP is required to detect this pattern.
 // ============================================================
 rule "CEP-2 Detect Mayor Rush"
     when
@@ -97,13 +97,13 @@ rule "CEP-2 Detect Mayor Rush"
 end
 
 // ============================================================
-// CEP-3: Detekcija izgubljenog temperaturnog tempa (odsustvo dogadjaja)
+// CEP-3: Detection of lost temperature tempo (absence of event)
 //
-// Ako nijedan TemperatureRaisedEvent nije zabelezen u poslednjih
-// 2 generacije, a igrac ima heat karte u ruci, igrac propusta prilike.
+// If no TemperatureRaisedEvent was recorded in last
+// 2 generations, and the player has heat cards in hand, the player misses the opportunity.
 //
-// Odsustvo dogadjaja u vremenskom intervalu je fundamentalno
-// nemoguce detektovati statickim pravilom.
+// The absence of events in the time interval is fundamentally
+// impossible to detect by static rule
 // ============================================================
 rule "CEP-3a Detect Heat Tempo Lost (Heat Stock)"
     when

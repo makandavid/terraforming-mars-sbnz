@@ -17,16 +17,14 @@ import com.tm.output.Recommendation;
 
 template "CardSynergy"
 
-// Auto-generisano pravilo za kartu @{cardName}
-// Sinergija: @{threshold}+ @{requiredTag} tagova
+// Auto-generated rule for card @{cardName}
+// Synergy: @{threshold}+ @{requiredTag} tags
 rule "Template-Synergy-@{cardName}-@{requiredTag}"
     when
         $player: PlayerState(currentPlayer == true, $pid: id)
 
-        // Karta se nalazi u ruci igraca
         CardInHand(playerId == $pid, name == "@{cardName}")
 
-        // Igrac ima dovoljno tagova za sinergiju
         $count: Number(intValue >= @{threshold}) from accumulate(
             PlayedCard(
                 playerId == $pid,
@@ -35,7 +33,6 @@ rule "Template-Synergy-@{cardName}-@{requiredTag}"
             count(1)
         )
 
-        // Preporuka jos nije generisana za ovu kartu/tag kombinaciju
         not Recommendation(
             playerId == $pid,
             type == RecommendationType.ACTION_ENABLED_BY_CARD_CONDITION,

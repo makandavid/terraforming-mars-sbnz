@@ -36,13 +36,13 @@ end
 // BC-1: canClaimMayor — Mayor milestone (3 grada)
 
 // canClaimMayor(playerId, currentCities, 3)
-// |__ currentCities >= 3 -> TRUE (bazni slucaj)
+// |__ currentCities >= 3 -> TRUE (base case)
 // |__ NE -> canClaimMayor(playerId, currentCities+1, 3)
-//          |__ postoji city karta koju moze da odigra
-//          |__ standardni projekat CITY (25 MC)
+//          |__ playable city card exists
+//          |__ standard project CITY (25 MC)
 // ============================================================
 
-// Rekurzivni slucaj 1 — preko karte
+// Recursive case 1 — by cards
 query canClaimMayorViaCard(long $playerId, int $current, int $target, int $remainingMc, UsedCards $usedCards)
     CardInHand(
         playerId == $playerId,
@@ -61,7 +61,7 @@ query canClaimMayorViaCard(long $playerId, int $current, int $target, int $remai
     )
 end
 
-// Rekurzivni slucaj 2 — standardni projekat
+// Recursive case 2 — standard project
 query canClaimMayorViaStandardProject(long $playerId, int $current, int $target, int $remainingMc, UsedCards $usedCards)
     eval($remainingMc >= 25)
     canClaimMayorJustStandard(
@@ -122,18 +122,18 @@ rule "BC-1 Mayor Reachability"
 end
 
 // ============================================================
-// BC-2: canClaimBuilder — Builder milestone (8 building tagova)
+// BC-2: canClaimBuilder — Builder milestone (8 building tags)
 //
 // canClaimBuilder(playerId, currentTags, 8)
-// |__ currentTags >= 8 -> TRUE (bazni slucaj)
+// |__ currentTags >= 8 -> TRUE (base case)
 // |__ NE -> canClaimBuilder(playerId, currentTags+1, 8)
-//          |__ postoji building karta koju moze da odigra
+//          |__ playable building card exists
 //
-// Napomena: Builder nema standardni projekat —
-// jedini nacin je odigravanjem building karte.
+// Note: Builder doesn't have standard project —
+// only way is by cards.
 // ============================================================
 
-// Rekurzivni slucaj — preko karte
+// Recursive case — by cards
 query canClaimBuilderViaCard(long $playerId, int $current, int $target, int $remainingMc, UsedCards $usedCards)
     CardInHand(
         playerId == $playerId,
@@ -188,16 +188,16 @@ rule "BC-2 Builder Reachability"
 end
 
 // ============================================================
-// BC-3: canClaimGardener — Gardener milestone (3 zelenila)
+// BC-3: canClaimGardener — Gardener milestone (3 greeneries)
 //
 // canClaimGardener(playerId, currentGreens, 3)
 // |__ currentGreens >= 3 -> TRUE (bazni slucaj)
 // |__ NE -> canClaimGardener(playerId, currentGreens+1, 3)
-//          |__ postoji greenery karta (dovoljno biljaka/MC)
-//          |__ standardni projekat GREENERY (8 biljaka)
+//          |__ greenery card exists (enough plants/MC)
+//          |__ standard project GREENERY (8 plants)
 // ============================================================
 
-// Rekurzivni slucaj 1 — preko karte
+// Recursive case 1 — by cards
 query canClaimGardenerViaCard(long $playerId, int $current, int $target, int $remainingMc, int $remainingPlants, UsedCards $usedCards)
     CardInHand(
         playerId == $playerId,
@@ -217,7 +217,7 @@ query canClaimGardenerViaCard(long $playerId, int $current, int $target, int $re
     )
 end
 
-// Rekurzivni slucaj 2 — standardni projekat
+// Recursive case 2 — standard project
 query canClaimGardenerViaStandardProject(long $playerId, int $current, int $target, int $remainingMc, int $remainingPlants, UsedCards $usedCards)
     eval($remainingPlants >= 8)
     canClaimGardenerJustStandard(
@@ -280,20 +280,20 @@ rule "BC-3 Gardener Reachability"
 end
 
 // ============================================================
-// BC-4: canWinScientist — Scientist nagrada (najvise SCIENCE tagova)
+// BC-4: canWinScientist — Scientist award (najvise SCIENCE tagova)
 //
 // canWinScientist(playerId, myCount, opponentMax)
-// |__ myCount > opponentMax -> TRUE (bazni slucaj)
+// |__ myCount > opponentMax -> TRUE (base case)
 // |__ NE -> canWinScientist(playerId, myCount+1, opponentMax)
-//          |__ postoji science karta koju moze da odigra
+//          |__ playable science card exists
 // ============================================================
 
-// Bazni slucaj
+// base case
 query canWinBase(int $myCount, int $opponentMax)
     eval($myCount > $opponentMax)
 end
 
-// Rekurzivni slucaj — postoji science karta u ruci koju igrac moze priustiti
+// Recursive case — playable science card in hand exists
 query canWinScientistViaCard(long $playerId, int $myCount, int $opponentMax, int $remainingMc, UsedCards $usedCards)
     CardInHand(
         playerId == $playerId,
@@ -360,13 +360,12 @@ rule "BC-4 Scientist Award Winnable"
 end
 
 // ============================================================
-// BC-5: canWinBanker — Banker nagrada (najvisa MC produkcija)
+// BC-5: canWinBanker — Banker award (max MC production)
 //
 // canWinBanker(playerId, myProduction, opponentMax)
-// |__ myProduction > opponentMax -> TRUE (bazni slucaj)
+// |__ myProduction > opponentMax -> TRUE (base case)
 // |__ NE -> canWinBanker(playerId, myProduction+increase, opponentMax)
-//          |__ postoji production karta
-//              sa konkretnim iznosom povecanja
+//          |__ production card exists with a specific amount of increase
 // ============================================================
 
 query canWinBankerViaCard(long $playerId, int $myProd, int $opponentMax, int $remainingMc, UsedCards $usedCards)

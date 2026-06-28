@@ -11,6 +11,7 @@ import com.tm.facts.Award;
 import com.tm.enums.CardTag;
 import com.tm.enums.TileType;
 import com.tm.enums.MilestoneType;
+import com.tm.enums.AwardType;
 import com.tm.enums.InsightType;
 import com.tm.enums.AlertType;
 import com.tm.enums.RecommendationType;
@@ -252,6 +253,7 @@ rule "FC-14a Scientist Award Favorable"
     when
         $myCount: TagCount($pid: playerId, tag == CardTag.SCIENCE, $mc: count)
         PlayerState(id == $pid, currentPlayer == true)
+        Award(type == AwardType.SCIENTIST, funded == false)
         not TagCount(tag == CardTag.SCIENCE, playerId != $pid, count > $mc)
         not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
     then
@@ -266,6 +268,7 @@ rule "FC-14b Scientist Award Contested"
         PlayerState(id == $pid, currentPlayer == true)
         $oppCount: TagCount(tag == CardTag.SCIENCE, playerId != $pid, $oc: count)
         eval($oc > $mc && ($oc - $mc) <= 2)
+        Award(type == AwardType.SCIENTIST, funded == false)
         not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
         not Alert(playerId == $pid, type == AlertType.SCIENTIST_AWARD_CONTESTED)
     then
@@ -313,6 +316,7 @@ rule "FC-18 Recommend Fund Scientist Award"
     when
         Alert($pid: playerId, type == AlertType.SCIENTIST_AWARD_FAVORABLE)
         PlayerState(id == $pid, currentPlayer == true, megacredits >= 8)
+        Award(type == AwardType.SCIENTIST, funded == false)
         not Recommendation(playerId == $pid, type == RecommendationType.FUND_AWARD, subject == "SCIENTIST")
     then
         insert(new Recommendation($pid, RecommendationType.FUND_AWARD, Priority.HIGH, "SCIENTIST",
@@ -326,6 +330,7 @@ rule "FC-19 Recommend Avoid Contested Award"
         TagCount(playerId == $pid, tag == CardTag.SCIENCE, $mc: count)
         TagCount(tag == CardTag.SCIENCE, playerId != $pid, $oc: count)
         eval(($oc - $mc) > 3)
+        Award(type == AwardType.SCIENTIST, funded == false)
         not Recommendation(playerId == $pid, type == RecommendationType.AVOID_AWARD, subject == "SCIENTIST")
     then
         insert(new Recommendation($pid, RecommendationType.AVOID_AWARD, Priority.MEDIUM, "SCIENTIST",

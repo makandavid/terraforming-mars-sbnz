@@ -27,7 +27,7 @@ export interface ThreatAlertDto {
 }
 
 export interface MilestoneReportDto {
-  milestone: string;
+  milestoneType: string;
   reachableNow: boolean;
   description: string;
 }

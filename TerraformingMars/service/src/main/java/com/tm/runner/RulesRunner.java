@@ -1,8 +1,12 @@
 package com.tm.runner;
 
+import com.tm.CEP.CardPlayedEvent;
+import com.tm.CEP.TilePlayedEvent;
 import com.tm.enums.*;
 import com.tm.facts.*;
 import com.tm.output.*;
+import com.tm.config.TemplateRuleService;
+import org.kie.api.time.SessionPseudoClock;
 import org.kie.api.runtime.KieSession;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -10,14 +14,15 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class RulesRunner implements CommandLineRunner {
 
-    private final KieSession kieSession;
+    private final TemplateRuleService templateRuleService;
 
-    public RulesRunner(KieSession kieSession) {
-        this.kieSession = kieSession;
+    public RulesRunner(TemplateRuleService templateRuleService) {
+        this.templateRuleService = templateRuleService;
     }
 
     @Override
@@ -27,13 +32,13 @@ public class RulesRunner implements CommandLineRunner {
 
         while (running) {
             System.out.println("\n=================================================");
-            System.out.println("  TERRAFORMING MARS — STRATESKI SAVETNIK SYSTEM  ");
+            System.out.println("  TERRAFORMING MARS — STRATEGIC ADVISOR SYSTEM  ");
             System.out.println("=================================================");
-            System.out.println("1. Pokreni kompletnu simulaciju (FC + BC)");
-            System.out.println("2. Pokreni samo Forward Chaining analizu (Nivoi 1-4)");
-            System.out.println("3. Testiraj Backward Chaining Milestone dohvativost");
-            System.out.println("0. Izlaz");
-            System.out.print("Izaberite opciju: ");
+            System.out.println("1. Run whole simulation (FC + BC)");
+            System.out.println("2. Run just Forward Chaining (Levels 1-4)");
+            System.out.println("3. Test Backward Chaining");
+            System.out.println("0. Exit");
+            System.out.print("Choose option: ");
 
             String choice = scanner.nextLine();
             switch (choice) {
@@ -48,125 +53,262 @@ public class RulesRunner implements CommandLineRunner {
                     break;
                 case "0":
                     running = false;
-                    System.out.println("Sistem ugasen.");
+                    System.out.println("System shut down.");
                     break;
                 default:
-                    System.out.println("Nevalidna opcija. Pokusajte ponovo.");
+                    System.out.println("Invalid option. Try again.");
             }
         }
     }
 
     private void runSimulation(boolean runFC, boolean runBC) {
-        System.out.println("\nInicijalizacija radne memorije i priprema stanja...");
+        KieSession kieSession = templateRuleService.newSessionWithTemplates();
 
-        // 1. Globalno stanje igre
-        GameState gameState = new GameState(6, 6.0, -12.0, 4, 4);
+        try {
+            System.out.println("=================================================");
+            System.out.println("\nInitializing test scenario...");
 
-        // 2. Trenutni igrac (id=1.0)
-        PlayerState currentPlayer = new PlayerState(
-                1.0, true, 22, 15, 5,
-                4, 1, 2, 0,
-                2, 1, 4, 1,
-                8, 1, 2, 2,
-                3, 7
-        );
+            // GLOBAL STATE
+            GameState gameState = new GameState(6, 6.0, -14.0, 3, 4);
 
-        // 3. Protivnik (id=2.0)
-        PlayerState opponent = new PlayerState(
-                2.0, false, 20, 14, 5,
-                6, 2, 3, 1,
-                3, 3, 2, 1,
-                2, 1, 2, 1,
-                3, 3
-        );
+            // CURRENT PLAYER (id=1)
+            PlayerState currentPlayer = new PlayerState(
+                    1L, true,
+                    22,   // terraformRating
+                    35,   // megacredits
+                    5,    // mcProduction
+                    4, 1, // steel, steelProduction
+                    2, 0, // titanium, titaniumProduction
+                    2, 1, // energy, energyProduction → FC-2
+                    4, 1, // heat, heatProduction
+                    16, 2,// plants, plantProduction → BC-3 via 2x standard project
+                    2,    // cityCount → FC-7b, BC-1
+                    2,    // greeneryCount → FC-7d, BC-3
+                    3,    // scienceTagCount
+                    7     // buildingTagCount → FC-7c
+            );
 
-        // ── INSERT FACT BLOCKS ──
-        kieSession.insert(gameState);
-        kieSession.insert(currentPlayer);
-        kieSession.insert(opponent);
+            // OPPONENT (id=2)
+            PlayerState opponent = new PlayerState(
+                    2L, false,
+                    20,   // terraformRating
+                    14,   // megacredits
+                    5,    // mcProduction → equal to player's, BC-5 recurse
+                    6, 2, // steel, steelProduction
+                    3, 1, // titanium, titaniumProduction
+                    3, 3, // energy, energyProduction
+                    2, 1, // heat, heatProduction
+                    2, 1, // plants, plantProduction
+                    2,    // cityCount → FC-4 OPPONENT_NEAR_MAYOR
+                    2,    // greeneryCount
+                    2,    // scienceTagCount → less than player's (3), BC-4 base case
+                    3     // buildingTagCount
+            );
 
-        // Odigrane karte trenutnog igraca (Za FC nivo 1)
-        kieSession.insert(new PlayedCard(1, "Research", List.of(CardTag.SCIENCE), 11, 0, "", 1.0, 3));
-        kieSession.insert(new PlayedCard(2, "Filterers", List.of(CardTag.SCIENCE), 4, 0, "", 1.0, 4));
-        kieSession.insert(new PlayedCard(3, "Olympus Conference", Arrays.asList(CardTag.SCIENCE, CardTag.EARTH, CardTag.BUILDING), 10, 3, "", 1.0, 5));
-        kieSession.insert(new PlayedCard(4, "Steel Works", List.of(CardTag.BUILDING), 15, 0, "", 1.0, 4));
-        kieSession.insert(new PlayedCard(5, "Mining Area", List.of(CardTag.BUILDING), 4, 1, "", 1.0, 3));
-        kieSession.insert(new PlayedCard(6, "Earth Office", Arrays.asList(CardTag.EARTH, CardTag.BUILDING), 1, 0, "", 1.0, 2));
-        kieSession.insert(new PlayedCard(7, "Caretaker Contract", List.of(CardTag.BUILDING), 3, 0, "", 1.0, 3));
-        kieSession.insert(new PlayedCard(8, "Lava Flows", List.of(CardTag.BUILDING), 18, 0, "", 1.0, 4));
-        kieSession.insert(new PlayedCard(9, "Mining Guild", Arrays.asList(CardTag.BUILDING, CardTag.BUILDING), 10, 0, "", 1.0, 5));
+            // PLAYED CARDS
+            // 3x SCIENCE → FC-1 (SCIENCE_ENGINE_ACTIVE)
+            PlayedCard research = new PlayedCard(
+                    1L, "Research",
+                    List.of(CardTag.SCIENCE), 11, 0, "", 1L, 2);
+            PlayedCard filterers = new PlayedCard(
+                    2L, "Filterers",
+                    List.of(CardTag.SCIENCE), 4, 0, "", 1L, 3);
+            PlayedCard olympus = new PlayedCard(
+                    3L, "Olympus Conference",
+                    Arrays.asList(CardTag.SCIENCE, CardTag.EARTH, CardTag.BUILDING),
+                    10, 3, "", 1L, 4);
 
-        // Protivnikove karte
-        kieSession.insert(new PlayedCard(10, "Physics Complex", Arrays.asList(CardTag.SCIENCE, CardTag.BUILDING), 12, 4, "", 2.0, 3));
-        kieSession.insert(new PlayedCard(11, "Invention Contest", List.of(CardTag.SCIENCE), 2, 0, "", 2.0, 4));
-        kieSession.insert(new PlayedCard(12, "Search For Life", List.of(CardTag.SCIENCE), 3, 0, "", 2.0, 5));
+            // BUILDING tags → FC-10 (TagCount BUILDING), FC-7c
+            PlayedCard steelWorks = new PlayedCard(
+                    4L, "Steel Works",
+                    List.of(CardTag.BUILDING), 15, 0, "", 1L, 3);
+            PlayedCard miningArea = new PlayedCard(
+                    5L, "Mining Area",
+                    List.of(CardTag.BUILDING), 4, 1, "", 1L, 3);
+            PlayedCard earthOffice = new PlayedCard(
+                    6L, "Earth Office",
+                    Arrays.asList(CardTag.EARTH, CardTag.BUILDING), 1, 0, "", 1L, 2);
+            PlayedCard caretaker = new PlayedCard(
+                    7L, "Caretaker Contract",
+                    List.of(CardTag.BUILDING), 3, 0, "", 1L, 3);
 
-        // Karte u ruci
-        CardInHand cityCard = new CardInHand(101.0, "Urbanized Area", Arrays.asList(CardTag.BUILDING, CardTag.CITY), 10, 0, "", 1.0);
-        cityCard.setPlacesCity(true);
-        cityCard.setEnergyProductionIncrease(1);
-        kieSession.insert(cityCard);
+            // OPPONENT'S PLAYED CARDS
+            // SCIENCE tags — less than player's → BC-4 base case
+            PlayedCard physicsComplex = new PlayedCard(
+                    10L, "Physics Complex",
+                    Arrays.asList(CardTag.SCIENCE, CardTag.BUILDING), 12, 4, "", 2L, 3);
+            PlayedCard inventionContest = new PlayedCard(
+                    11L, "Invention Contest",
+                    List.of(CardTag.SCIENCE), 2, 0, "", 2L, 4);
 
-        CardInHand buildingCard = new CardInHand(102.0, "Acquired Company", List.of(CardTag.BUILDING), 8, 0, "", 1.0);
-        buildingCard.setMcProductionIncrease(2);
-        kieSession.insert(buildingCard);
+            // CARDS IN HAND
+            // Urbanized Area: places_city=true → BC-1 via card
+            // cost=10, player mc=35 → can be played
+            CardInHand cityCard = new CardInHand(
+                    101L, "Urbanized Area",
+                    Arrays.asList(CardTag.BUILDING, CardTag.CITY),
+                    10, 0, "", 1L);
+            cityCard.setPlacesCity(true);
+            cityCard.setEnergyProductionIncrease(1);
 
-        CardInHand scienceCard = new CardInHand(103.0, "Quantum Extractor", Arrays.asList(CardTag.SCIENCE, CardTag.POWER), 8, 0, "", 1.0);
-        scienceCard.setRequiresEnergy(true);
-        scienceCard.setScienceSynergyBonus(true);
-        kieSession.insert(scienceCard);
+            // Fusion Power: requires_energy=true, science_synergy_bonus=true
+            // → FC-11 (BLOCKED_CARD jer energy production < 2 but science engine active)
+            // → Template rule: requests 2+ SCIENCE tags, player has 3 → FIRES
+            CardInHand fusionPower = new CardInHand(
+                    102L, "Fusion Power",
+                    Arrays.asList(CardTag.BUILDING, CardTag.POWER, CardTag.SCIENCE),
+                    14, 0, "", 1L);
+            fusionPower.setRequiresEnergy(true);
+            fusionPower.setScienceSynergyBonus(true);
+            fusionPower.setEnergyProductionIncrease(3);
 
-        CardInHand productionCard = new CardInHand(104.0, "Earth Office Hand", Arrays.asList(CardTag.EARTH, CardTag.BUILDING), 8, 0, "", 1.0);
-        productionCard.setMcProductionIncrease(2);
-        kieSession.insert(productionCard);
+            // Acquired Company: mc production increase → za BC-5 recurse test
+            CardInHand acquiredCompany = new CardInHand(
+                    103L, "Acquired Company",
+                    List.of(CardTag.BUILDING), 8, 0, "", 1L);
+            acquiredCompany.setMcProductionIncrease(2);
 
-        // Plocice i Milestone-ovi
-        kieSession.insert(new TilePlaced(1.0, TileType.CITY, 3));
-        kieSession.insert(new TilePlaced(1.0, TileType.CITY, 4));
-        kieSession.insert(new TilePlaced(1.0, TileType.GREENERY, 4));
-        kieSession.insert(new TilePlaced(1.0, TileType.GREENERY, 5));
-        kieSession.insert(new TilePlaced(2.0, TileType.CITY, 4));
-        kieSession.insert(new TilePlaced(2.0, TileType.CITY, 5));
+            // TILES
+            // player: 2 cities, 2 greeneries
+            TilePlaced city1 = new TilePlaced(1L, TileType.CITY, 3);
+            TilePlaced city2 = new TilePlaced(1L, TileType.CITY, 4);
+            TilePlaced green1 = new TilePlaced(1L, TileType.GREENERY, 4);
+            TilePlaced green2 = new TilePlaced(1L, TileType.GREENERY, 5);
+            // opponent: 2 cities → FC-4
+            TilePlaced oppCity1 = new TilePlaced(2L, TileType.CITY, 4);
+            TilePlaced oppCity2 = new TilePlaced(2L, TileType.CITY, 5);
 
-        kieSession.insert(new Milestone(MilestoneType.MAYOR, false, 0.0, 0));
-        kieSession.insert(new Milestone(MilestoneType.BUILDER, false, 0.0, 0));
-        kieSession.insert(new Milestone(MilestoneType.GARDENER, false, 0.0, 0));
-        kieSession.insert(new Milestone(MilestoneType.TERRAFORMER, false, 0.0, 0));
-        kieSession.insert(new Milestone(MilestoneType.PLANNER, false, 0.0, 0));
+            // MILESTONES
+            // Not claimed → BC-1 Mayor, BC-3 Gardener, BC-4 Builder
+            Milestone mayor     = new Milestone(MilestoneType.MAYOR,      false, 0L, 0);
+            Milestone builder   = new Milestone(MilestoneType.BUILDER,    false, 0L, 0);
+            Milestone gardener  = new Milestone(MilestoneType.GARDENER,   false, 0L, 0);
+            Milestone terraformer = new Milestone(MilestoneType.TERRAFORMER, false, 0L, 0);
+            Milestone planner   = new Milestone(MilestoneType.PLANNER,    false, 0L, 0);
 
-        System.out.println("Fakti uspesno uvezeni. Ukupan broj objekata: " + kieSession.getFactCount());
+            // AWARDS
+            // Not funded → BC-4 Scientist, BC-5 Banker
+            Award scientist  = new Award(AwardType.SCIENTIST,  false, 0L, 8);
+            Award banker     = new Award(AwardType.BANKER,     false, 0L, 8);
+            Award landlord   = new Award(AwardType.LANDLORD,   false, 0L, 8);
+            Award thermalist = new Award(AwardType.THERMALIST, false, 0L, 8);
+            Award miner      = new Award(AwardType.MINER,      false, 0L, 8);
 
-        // Koriscenje Drools Agenda filtera za kontrolu izvrsavanja
-        int fired = kieSession.fireAllRules(match -> {
-            String name = match.getRule().getName();
-            if (!runFC && name.startsWith("FC-")) return false;
-            if (!runBC && name.startsWith("BC-")) return false;
-            return true;
-        });
+            // CEP EVENTS
+            // CEP-1: opponent played 3 SCIENCE cards in last 2 generations
+            // generation 5 and 6 are in sliding window (clock is on gen 6 = 6000ms,
+            // window is 2000ms → covers gen 4,5,6)
+            CardPlayedEvent sciEvent1 = new CardPlayedEvent(2L, 5, CardTag.SCIENCE);
+            CardPlayedEvent sciEvent2 = new CardPlayedEvent(2L, 5,  CardTag.SCIENCE);
+            CardPlayedEvent sciEvent3 = new CardPlayedEvent(2L, 6, CardTag.SCIENCE);
 
-        System.out.println("--- Evaluacija zavrsena. Broj aktiviranih pravila: " + fired + " ---");
-        showResults();
+            // CEP-2: opponent placed 2 cities in gap <= 2 generations
+            // generations 4 and 5 → gap = 1 <= 2 → MAYOR_RUSH
+            TilePlayedEvent tileEvent1 = new TilePlayedEvent(2L, 4, TileType.CITY);
+            TilePlayedEvent tileEvent2 = new TilePlayedEvent(2L, 5, TileType.CITY);
 
-        // Ciscenje radne memorije za sledecu CLI iteraciju
-        kieSession.getFactHandles().forEach(kieSession::delete);
+            // CEP-3: player did NOT raise temperature in last 2 generations
+            // (we don't insert TemperatureRaisedEvent for player 1)
+            // + player has raises_temperature card in hand
+            CardInHand heatCard = new CardInHand(
+                    104L, "Nuclear Zone",
+                    List.of(CardTag.EARTH), 10, -2, "", 1L);
+            heatCard.setRaisesTemperature(true);
+
+            // INSERT ALL FACTS
+            kieSession.insert(gameState);
+            kieSession.insert(currentPlayer);
+            kieSession.insert(opponent);
+
+            // played cards
+            kieSession.insert(research);
+            kieSession.insert(filterers);
+            kieSession.insert(olympus);
+            kieSession.insert(steelWorks);
+            kieSession.insert(miningArea);
+            kieSession.insert(earthOffice);
+            kieSession.insert(caretaker);
+            kieSession.insert(physicsComplex);
+            kieSession.insert(inventionContest);
+
+            // cards in hand
+            kieSession.insert(cityCard);
+            kieSession.insert(fusionPower);
+            kieSession.insert(acquiredCompany);
+            kieSession.insert(heatCard);
+
+            // tiles
+            kieSession.insert(city1);
+            kieSession.insert(city2);
+            kieSession.insert(green1);
+            kieSession.insert(green2);
+            kieSession.insert(oppCity1);
+            kieSession.insert(oppCity2);
+
+            // Milestones and awards
+            kieSession.insert(mayor);
+            kieSession.insert(builder);
+            kieSession.insert(gardener);
+            kieSession.insert(terraformer);
+            kieSession.insert(planner);
+            kieSession.insert(scientist);
+            kieSession.insert(banker);
+            kieSession.insert(landlord);
+            kieSession.insert(thermalist);
+            kieSession.insert(miner);
+
+            // CEP events — must be inserted AS EVENTS (inserted in stream)
+            // advance pseudo clock to current generation
+            SessionPseudoClock clock = kieSession.getSessionClock();
+            clock.advanceTime(gameState.getGeneration() * 1000L, TimeUnit.MILLISECONDS);
+
+            kieSession.insert(sciEvent1);
+            kieSession.insert(sciEvent2);
+            kieSession.insert(sciEvent3);
+            kieSession.insert(tileEvent1);
+            kieSession.insert(tileEvent2);
+
+            System.out.println("Facts successfully inserted. Count: "
+                    + kieSession.getFactCount());
+
+            // ── FIRE RULES ───────────────────────────────────────────────
+            int fired = kieSession.fireAllRules(match -> {
+                String name = match.getRule().getName();
+                if (!runFC && (name.startsWith("FC-") || name.startsWith("ACC-"))) return false;
+                if (!runBC && name.startsWith("BC-")) return false;
+                if (!runBC && name.startsWith("Template-")) return false;
+                return true;
+            });
+
+            System.out.println("\n--- Evaluation done. Activated rules: "
+                    + fired + " ---");
+            showResults(kieSession);
+            System.out.println("=================================================");
+
+        } finally {
+            kieSession.dispose();
+        }
     }
 
-    private void showResults() {
-        System.out.println("\n>>> STRATESKI PREGLED REZULTATA <<<");
+    private void showResults(KieSession kieSession) {
+        System.out.println("\n>>> STRATEGIC REVIEW <<<");
 
-        System.out.println("\n[INSIGHTS NIVO 1]:");
+        System.out.println("\n[INSIGHTS LEVEL 1]:");
         kieSession.getObjects(o -> o instanceof Insight).forEach(System.out::println);
 
-        System.out.println("\n[ALERTS NIVO 2]:");
+        System.out.println("\n[ALERTS LEVEL 2]:");
         kieSession.getObjects(o -> o instanceof Alert).forEach(System.out::println);
 
         System.out.println("\n[MILESTONE REPORTS BC]:");
         kieSession.getObjects(o -> o instanceof MilestoneReport).forEach(System.out::println);
 
-        System.out.println("\n[PREPORUKE]:");
+        System.out.println("\n[RECOMMENDATIONS]:");
         kieSession.getObjects(o -> o instanceof Recommendation).forEach(System.out::println);
 
-        System.out.println("\n[STRATESKI SAVETI]:");
+        System.out.println("\n[STRATEGIC ADVICES]:");
         kieSession.getObjects(o -> o instanceof StrategicAdvice).forEach(System.out::println);
+
+        System.out.println("\n[THREAT ALERTS]:");
+        kieSession.getObjects(o -> o instanceof ThreatAlert).forEach(System.out::println);
     }
 }

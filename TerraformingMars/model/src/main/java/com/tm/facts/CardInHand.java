@@ -1,7 +1,6 @@
 package com.tm.facts;
 
 import com.tm.enums.CardTag;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
