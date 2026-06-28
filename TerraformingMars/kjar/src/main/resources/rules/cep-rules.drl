@@ -73,6 +73,7 @@ rule "CEP-2 Detect Mayor Rush"
     when
         $currentPlayer: PlayerState(currentPlayer == true, $pid: id)
         $opponent: PlayerState(currentPlayer == false, $oid: id)
+        GameState($currentGen: generation)
 
         $e1: TilePlayedEvent(
             playerId == $oid,
@@ -81,10 +82,12 @@ rule "CEP-2 Detect Mayor Rush"
         )
 
         $e2: TilePlayedEvent(
+            this != $e1,
             playerId == $oid,
             tileType == TileType.CITY,
             $g2: generation,
-            generation > $g1,
+            generation >= $currentGen - 2,
+            generation >= $g1,
             generation - $g1 <= 2
         )
 
