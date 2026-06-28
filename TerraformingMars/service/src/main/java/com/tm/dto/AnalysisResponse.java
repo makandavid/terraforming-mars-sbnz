@@ -18,4 +18,5 @@ public class AnalysisResponse {
     private List<InsightDto> insights;
     private List<ThreatAlertDto> threatAlerts;
     private List<MilestoneReportDto> milestoneReports;
+    private ScoreProjectionDto scoreProjection;
 }

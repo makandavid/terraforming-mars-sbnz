@@ -7,6 +7,7 @@ import com.tm.facts.PlayedCard;
 import com.tm.facts.CardInHand;
 import com.tm.facts.TilePlaced;
 import com.tm.facts.Milestone;
+import com.tm.facts.Award;
 import com.tm.enums.CardTag;
 import com.tm.enums.TileType;
 import com.tm.enums.MilestoneType;
@@ -20,6 +21,7 @@ import com.tm.output.Alert;
 import com.tm.output.Recommendation;
 import com.tm.output.StrategicAdvice;
 import com.tm.output.TagCount;
+import com.tm.output.ScoreProjection;
 
 // FC LEVEL 1
 
@@ -390,4 +392,75 @@ rule "FC-22 Strategic Defensive Generation"
         insert(new StrategicAdvice($pid, AdviceType.DEFENSIVE_GENERATION,
             $urgentCount + " URGENT threats active — prioritize defense of milestones over development"));
         System.out.println("[FC-22] StrategicAdvice: DEFENSIVE_GENERATION (" + $urgentCount + " URGENT alerts)");
+end
+
+// ACC
+rule "ACC-1 VP Score Projection"
+    when
+        $player: PlayerState($pid: id, $tr: terraformRating)
+
+        $cardVP: Number() from accumulate(
+            PlayedCard(playerId == $pid, $vp: vpValue),
+            sum($vp)
+        )
+        $greeneryVP: Number() from accumulate(
+            TilePlaced(playerId == $pid, tileType == TileType.GREENERY),
+            count(1)
+        )
+        $cityVP: Number() from accumulate(
+            TilePlaced(playerId == $pid, tileType == TileType.CITY),
+            count(1)
+        )
+        $milestoneCount: Number() from accumulate(
+            Milestone(claimedBy == $pid, claimed == true),
+            count(1)
+        )
+        $awardVP: Number() from accumulate(
+            Award(fundedBy == $pid, funded == true),
+            count(1)
+        )
+
+        not ScoreProjection(playerId == $pid)
+    then
+        int cardVPInt = $cardVP.intValue();
+        int greeneryVPInt = $greeneryVP.intValue();
+        int cityVPInt = $cityVP.intValue();
+        int milestoneVPInt = $milestoneCount.intValue() * 5;
+        int awardVPInt = $awardVP.intValue() * 5;  // optimistic: assume winner
+        int tileVPInt = greeneryVPInt + cityVPInt;
+        int totalVP = $tr + cardVPInt + tileVPInt + milestoneVPInt + awardVPInt;
+
+        String desc = "Projection VP for player " + $pid + ": " + totalVP +
+            " (TR=" + $tr +
+            ", cards=" + cardVPInt +
+            ", tiles=" + tileVPInt +
+            ", milestones=" + milestoneVPInt +
+            ", awards=" + awardVPInt + ")";
+
+        insert(new ScoreProjection(
+            $pid, totalVP, $tr,
+            cardVPInt, tileVPInt,
+            milestoneVPInt, awardVPInt,
+            desc
+        ));
+        System.out.println("[ACC-1] " + desc);
+end
+
+rule "ACC-1b Score Lagging Alert"
+    when
+        $player: PlayerState(currentPlayer == true, $pid: id)
+        $myScore: ScoreProjection(playerId == $pid, $myTotal: projectedScore)
+
+        PlayerState(currentPlayer == false, $oid: id)
+        $oppScore: ScoreProjection(
+            playerId == $oid,
+            projectedScore > $myTotal + 10
+        )
+
+        not Insight(playerId == $pid, type == InsightType.SCORE_LAGGING)
+    then
+        int gap = $oppScore.getProjectedScore() - $myTotal;
+        insert(new Insight($pid, InsightType.SCORE_LAGGING,
+            "You are behind your opponent by " + gap + " VP — consider a more aggressive strategy of milestones and rewards"));
+        System.out.println("[ACC-1b] Score lagging, gap=" + gap);
 end

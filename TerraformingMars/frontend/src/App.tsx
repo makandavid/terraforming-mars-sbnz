@@ -57,7 +57,6 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Terraforming Mars — Strategic Advisor</h1>
-        <p>Powered by Drools rule engine</p>
       </header>
 
       <div className="app-body">

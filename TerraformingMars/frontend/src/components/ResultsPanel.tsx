@@ -21,6 +21,22 @@ export function ResultsPanel({ result, loading, error }: Props) {
   return (
     <div className="results-panel">
 
+      {result.scoreProjection && (
+        <section>
+          <h3>VP Projection</h3>
+          <div className="score-projection">
+            <div className="score-total">{result.scoreProjection.projectedScore} VP</div>
+            <div className="score-breakdown">
+              <span>TR: {result.scoreProjection.trContribution}</span>
+              <span>Karte: {result.scoreProjection.cardVpContribution}</span>
+              <span>Pločice: {result.scoreProjection.tileVpContribution}</span>
+              <span>Milestone-ovi: {result.scoreProjection.milestoneVpContribution}</span>
+              <span>Nagrade: {result.scoreProjection.awardVpContribution}</span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {result.recommendations.length > 0 && (
         <section>
           <h3>Recommendations</h3>

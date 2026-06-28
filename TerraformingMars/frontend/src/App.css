@@ -382,3 +382,32 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   color: #666;
   margin-bottom: 12px;
 }
+
+.score-projection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.score-total {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #f39c12;
+  min-width: 80px;
+}
+
+.score-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.score-breakdown span {
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: #aaa;
+}

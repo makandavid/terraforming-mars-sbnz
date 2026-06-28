@@ -16,4 +16,6 @@ public enum InsightType {
     SELF_NEAR_PLANNER,
 
     TEMPERATURE_STALLED,
+
+    SCORE_LAGGING
 }

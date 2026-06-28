@@ -32,12 +32,23 @@ export interface MilestoneReportDto {
   description: string;
 }
 
+export interface ScoreProjectionDto {
+  projectedScore: number;
+  trContribution: number;
+  cardVpContribution: number;
+  tileVpContribution: number;
+  milestoneVpContribution: number;
+  awardVpContribution: number;
+  description: string;
+}
+
 export interface AnalysisResponse {
   recommendations: RecommendationDto[];
   alerts: AlertDto[];
   insights: InsightDto[];
   threatAlerts: ThreatAlertDto[];
   milestoneReports: MilestoneReportDto[];
+  scoreProjection: ScoreProjectionDto | null;
 }
 
 export interface CardCatalogEntry {

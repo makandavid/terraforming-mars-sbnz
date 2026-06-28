@@ -1,4 +1,4 @@
-package com.tm.service;
+package com.tm.config;
 
 import com.tm.entity.CardSynergyEntity;
 import com.tm.repository.CardSynergyRepository;
@@ -9,6 +9,8 @@ import org.kie.api.builder.Message;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
@@ -19,8 +21,6 @@ public class TemplateRuleService {
 
     private final CardSynergyRepository cardSynergyRepository;
 
-    // Cached container that includes template rules
-    // null until first request after data.sql has run
     private volatile KieContainer templateKieContainer = null;
 
     private static final List<String> CARD_TAG_NAMES = Arrays.asList(
@@ -32,25 +32,46 @@ public class TemplateRuleService {
         this.cardSynergyRepository = cardSynergyRepository;
     }
 
-    // Returns a KieSession that has both static rules AND template rules.
-    // On the first call the template container is built (data.sql has run by now).
-    // Subsequent calls reuse the cached container.
+    // Fires AFTER the application context is fully started
+    // and AFTER data.sql has been executed.
+    // This pre-builds the template container so the first
+    // analyze() request is not slow.
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        System.out.println("[TEMPLATE] ApplicationReadyEvent — " +
+                "starting pre-compiling template rules...");
+        try {
+            buildContainerWithTemplates();
+            System.out.println("[TEMPLATE] Pre-compiling template rules finished");
+            System.out.println("=================================================");
+        } catch (Exception e) {
+            System.err.println("[TEMPLATE] Error while pre-compiling: " + e.getMessage());
+            // Don't crash the application — lazy fallback still works
+        }
+    }
+
     public KieSession newSessionWithTemplates() {
         if (templateKieContainer == null) {
             synchronized (this) {
                 if (templateKieContainer == null) {
-                    templateKieContainer = buildContainerWithTemplates();
+                    System.out.println("[TEMPLATE] Lazy build — " +
+                            "container is not ready yet...");
+                    buildContainerWithTemplates();
                 }
             }
         }
         return templateKieContainer.newKieSession("tm-session");
     }
 
-    private KieContainer buildContainerWithTemplates() {
+    private synchronized void buildContainerWithTemplates() {
+        // Double-check inside synchronized block
+        if (templateKieContainer != null) {
+            return;
+        }
+
         KieServices ks = KieServices.Factory.get();
         KieFileSystem kfs = ks.newKieFileSystem();
 
-        // Static rules
         kfs.write(ks.getResources()
                 .newClassPathResource("rules/rules.drl")
                 .setResourceType(ResourceType.DRL));
@@ -72,7 +93,6 @@ public class TemplateRuleService {
                         "</kmodule>"
         );
 
-        // Generate template rules from database — data.sql has run by now
         String generatedDrl = generateTemplateRules();
         if (!generatedDrl.isBlank()) {
             kfs.write(
@@ -92,9 +112,10 @@ public class TemplateRuleService {
                             kieBuilder.getResults().toString());
         }
 
-        System.out.println("[TEMPLATE] KieContainer with template rules successfully created");
-        return ks.newKieContainer(
+        templateKieContainer = ks.newKieContainer(
                 ks.getRepository().getDefaultReleaseId());
+
+        System.out.println("[TEMPLATE] KieContainer with template rules is ready");
     }
 
     private String generateTemplateRules() {
@@ -102,12 +123,11 @@ public class TemplateRuleService {
                 cardSynergyRepository.findByRequiredTagIn(CARD_TAG_NAMES);
 
         if (synergies.isEmpty()) {
-            System.out.println("[TEMPLATE] No synergy in the database");
+            System.out.println("[TEMPLATE] Not synergies in database");
             return "";
         }
 
         StringBuilder drl = new StringBuilder();
-
         drl.append("package rules;\n\n");
         drl.append("import com.tm.facts.PlayerState;\n");
         drl.append("import com.tm.facts.PlayedCard;\n");
@@ -148,17 +168,17 @@ public class TemplateRuleService {
             drl.append("            Priority.").append(s.getPriority()).append(",\n");
             drl.append("            \"").append(s.getCardName()).append("\",\n");
             drl.append("            \"").append(s.getEffectText())
-                    .append(" (trenutno imas \" + $count.intValue() + \" ")
-                    .append(s.getRequiredTag()).append(" tagova)\"\n");
+                    .append(" (currently you have \" + $count.intValue() + \" ")
+                    .append(s.getRequiredTag()).append(" tags)\"\n");
             drl.append("        ));\n");
-            drl.append("        System.out.println(\"[TEMPLATE] Sinergija: ")
+            drl.append("        System.out.println(\"[TEMPLATE] Synergy: ")
                     .append(ruleName)
                     .append(", count=\" + $count.intValue() + \")\");\n");
             drl.append("end\n\n");
         }
 
-        String generated = drl.toString();
-        System.out.println("[TEMPLATE] Generated " + synergies.size() + " rules from database");
-        return generated;
+        System.out.println("[TEMPLATE] Generated " + synergies.size() +
+                " rules from database");
+        return drl.toString();
     }
 }

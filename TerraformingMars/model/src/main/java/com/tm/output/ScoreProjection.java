@@ -12,8 +12,22 @@ import lombok.Setter;
 public class ScoreProjection {
 
     private long playerId;
-    private int trPoints;
-    private int cardVP;
-    private int milestoneVP;
-    private int totalProjected;
+    private int projectedScore;
+    private int trContribution;
+    private int cardVpContribution;
+    private int tileVpContribution;
+    private int milestoneVpContribution;
+    private int awardVpContribution;
+    private String description;
+
+    @Override
+    public String toString() {
+        return "ScoreProjection[player=" + playerId +
+                ", total=" + projectedScore +
+                " (TR=" + trContribution +
+                ", cards=" + cardVpContribution +
+                ", tiles=" + tileVpContribution +
+                ", milestones=" + milestoneVpContribution +
+                ", awards=" + awardVpContribution + ")]";
+    }
 }

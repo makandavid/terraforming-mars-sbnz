@@ -1,9 +1,9 @@
 package com.tm.service;
 
+import com.tm.config.TemplateRuleService;
 import com.tm.dto.*;
 import com.tm.mapper.GameStateMapper;
 import com.tm.output.*;
-import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.time.SessionPseudoClock;
 import org.springframework.stereotype.Service;
@@ -36,6 +36,7 @@ public class AdvisorService {
             gameStateMapper.toFacts(request).forEach(kieSession::insert);
 
             kieSession.fireAllRules();
+            System.out.println("=================================================");
 
             List<RecommendationDto> recommendations = kieSession
                     .getObjects(o -> o instanceof Recommendation)
@@ -102,8 +103,25 @@ public class AdvisorService {
                     ))
                     .toList();
 
+            ScoreProjectionDto scoreProjection = kieSession
+                    .getObjects(o -> o instanceof ScoreProjection)
+                    .stream()
+                    .map(o -> (ScoreProjection) o)
+                    .filter(s -> s.getPlayerId() == request.getCurrentPlayer().getId())
+                    .findFirst()
+                    .map(s -> new ScoreProjectionDto(
+                            s.getProjectedScore(),
+                            s.getTrContribution(),
+                            s.getCardVpContribution(),
+                            s.getTileVpContribution(),
+                            s.getMilestoneVpContribution(),
+                            s.getAwardVpContribution(),
+                            s.getDescription()
+                    ))
+                    .orElse(null);
+
             return new AnalysisResponse(
-                    recommendations, strategicAdvices, alerts, insights, threatAlerts, milestoneReports
+                    recommendations, strategicAdvices, alerts, insights, threatAlerts, milestoneReports, scoreProjection
             );
         } finally {
             kieSession.dispose();
