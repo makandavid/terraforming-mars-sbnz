@@ -15,4 +15,9 @@ public class StrategicAdvice {
     private long playerId;
     private AdviceType adviceType;
     private String explanation;
+
+    @Override
+    public String toString() {
+        return "[" + adviceType + "] |" + explanation;
+    }
 }

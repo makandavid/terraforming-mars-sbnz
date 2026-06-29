@@ -162,6 +162,24 @@ public class RulesRunner implements CommandLineRunner {
             fusionPower.setScienceSynergyBonus(true);
             fusionPower.setEnergyProductionIncrease(3);
 
+            CardInHand solarPower = new CardInHand(
+                    105L, "Solar Power",
+                    Arrays.asList(CardTag.BUILDING, CardTag.POWER),
+                    11, 1, "", 1L);
+            solarPower.setEnergyProductionIncrease(1);
+
+            CardInHand geothermalPower = new CardInHand(
+                    106L, "Geothermal Power",
+                    Arrays.asList(CardTag.BUILDING, CardTag.POWER),
+                    11, 0, "", 1L);
+            geothermalPower.setEnergyProductionIncrease(2);
+
+            CardInHand nuclearPower = new CardInHand(
+                    107L, "Nuclear Power",
+                    Arrays.asList(CardTag.BUILDING, CardTag.POWER),
+                    10, 0, "", 1L);
+            nuclearPower.setEnergyProductionIncrease(3);
+
             // Acquired Company: mc production increase → za BC-5 recurse test
             CardInHand acquiredCompany = new CardInHand(
                     103L, "Acquired Company",
@@ -236,6 +254,9 @@ public class RulesRunner implements CommandLineRunner {
             kieSession.insert(fusionPower);
             kieSession.insert(acquiredCompany);
             kieSession.insert(heatCard);
+            kieSession.insert(solarPower);
+            kieSession.insert(geothermalPower);
+            kieSession.insert(nuclearPower);
 
             // tiles
             kieSession.insert(city1);
@@ -310,5 +331,8 @@ public class RulesRunner implements CommandLineRunner {
 
         System.out.println("\n[THREAT ALERTS]:");
         kieSession.getObjects(o -> o instanceof ThreatAlert).forEach(System.out::println);
+
+        System.out.println("\n[SCORE PROJECTION ACC]:");
+        kieSession.getObjects(o -> o instanceof ScoreProjection).forEach(System.out::println);
     }
 }
