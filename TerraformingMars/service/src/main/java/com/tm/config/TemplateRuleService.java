@@ -2,6 +2,7 @@ package com.tm.config;
 
 import com.tm.entity.CardSynergyEntity;
 import com.tm.repository.CardSynergyRepository;
+import org.drools.template.ObjectDataCompiler;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -9,10 +10,11 @@ import org.kie.api.builder.Message;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.*;
 
@@ -36,7 +38,7 @@ public class TemplateRuleService {
     // and AFTER data.sql has been executed.
     // This pre-builds the template container so the first
     // analyze() request is not slow.
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(ContextRefreshedEvent.class)
     public void onApplicationReady() {
         System.out.println("[TEMPLATE] ApplicationReadyEvent — " +
                 "starting pre-compiling template rules...");
@@ -123,62 +125,28 @@ public class TemplateRuleService {
                 cardSynergyRepository.findByRequiredTagIn(CARD_TAG_NAMES);
 
         if (synergies.isEmpty()) {
-            System.out.println("[TEMPLATE] Not synergies in database");
+            System.out.println("[TEMPLATE] No synergies in database");
             return "";
         }
 
-        StringBuilder drl = new StringBuilder();
-        drl.append("package rules;\n\n");
-        drl.append("import com.tm.facts.PlayerState;\n");
-        drl.append("import com.tm.facts.PlayedCard;\n");
-        drl.append("import com.tm.facts.CardInHand;\n");
-        drl.append("import com.tm.enums.CardTag;\n");
-        drl.append("import com.tm.enums.RecommendationType;\n");
-        drl.append("import com.tm.enums.Priority;\n");
-        drl.append("import com.tm.output.Recommendation;\n\n");
+        try (InputStream templateStream = getClass().getResourceAsStream("/rules/card-synergy.drt")) {
+            if (templateStream == null) {
+                throw new RuntimeException("[TEMPLATE] Template rules not found at /rules/card-synergy.drt");
+            }
 
-        for (CardSynergyEntity s : synergies) {
-            String ruleName = "Template-Synergy-"
-                    + s.getCardName().replaceAll("[^a-zA-Z0-9]", "-")
-                    + "-" + s.getRequiredTag();
+            ObjectDataCompiler compiler = new ObjectDataCompiler();
 
-            drl.append("rule \"").append(ruleName).append("\"\n");
-            drl.append("    when\n");
-            drl.append("        $player: PlayerState(currentPlayer == true, $pid: id)\n");
-            drl.append("        CardInHand(playerId == $pid, name == \"")
-                    .append(s.getCardName()).append("\")\n");
-            drl.append("        $count: Number(intValue >= ").append(s.getThreshold())
-                    .append(") from accumulate(\n");
-            drl.append("            PlayedCard(\n");
-            drl.append("                playerId == $pid,\n");
-            drl.append("                tags contains CardTag.").append(s.getRequiredTag())
-                    .append("\n");
-            drl.append("            ),\n");
-            drl.append("            count(1)\n");
-            drl.append("        )\n");
-            drl.append("        not Recommendation(\n");
-            drl.append("            playerId == $pid,\n");
-            drl.append("            type == RecommendationType.ACTION_ENABLED_BY_CARD_CONDITION,\n");
-            drl.append("            subject == \"").append(s.getCardName()).append("\"\n");
-            drl.append("        )\n");
-            drl.append("    then\n");
-            drl.append("        insert(new Recommendation(\n");
-            drl.append("            $pid,\n");
-            drl.append("            RecommendationType.ACTION_ENABLED_BY_CARD_CONDITION,\n");
-            drl.append("            Priority.").append(s.getPriority()).append(",\n");
-            drl.append("            \"").append(s.getCardName()).append("\",\n");
-            drl.append("            \"").append(s.getEffectText())
-                    .append(" (currently you have \" + $count.intValue() + \" ")
-                    .append(s.getRequiredTag()).append(" tags)\"\n");
-            drl.append("        ));\n");
-            drl.append("        System.out.println(\"[TEMPLATE] Synergy: ")
-                    .append(ruleName)
-                    .append(", count=\" + $count.intValue() + \")\");\n");
-            drl.append("end\n\n");
+            String generatedDrl = compiler.compile(synergies, templateStream);
+
+            System.out.println("[TEMPLATE] Generated " + synergies.size() +
+                    " rules from card-synergy.drt + database.");
+            System.out.println("[TEMPLATE] Generated DRL preview (first 500 chars):\n" +
+                    generatedDrl.substring(0, Math.min(500, generatedDrl.length())));
+
+            return generatedDrl;
+        } catch (Exception e) {
+            throw new RuntimeException("[TEMPLATE] Failed to generate template rules: " + e.getMessage(), e);
         }
-
-        System.out.println("[TEMPLATE] Generated " + synergies.size() +
-                " rules from database");
-        return drl.toString();
     }
+
 }
