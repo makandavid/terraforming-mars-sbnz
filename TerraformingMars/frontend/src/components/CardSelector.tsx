@@ -223,7 +223,7 @@ export function CardSelector({
                       )}
                       <span className="gen"> gen {c.generationPlayed}</span>
                       <button onClick={() => removePlayedCard(
-                        playedCards.findIndex((pc, pi) =>
+                        playedCards.findIndex((pc, _) =>
                           pc.playerId === player.id &&
                           playedCards.filter(x => x.playerId === player.id)[i] === pc
                         )
