@@ -44,6 +44,7 @@ export interface ScoreProjectionDto {
 
 export interface AnalysisResponse {
   recommendations: RecommendationDto[];
+  strategicAdvices: StrategicAdviceDto[];
   alerts: AlertDto[];
   insights: InsightDto[];
   threatAlerts: ThreatAlertDto[];

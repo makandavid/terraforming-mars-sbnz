@@ -37,6 +37,25 @@ export function ResultsPanel({ result, loading, error }: Props) {
         </section>
       )}
 
+      {result.strategicAdvices.length > 0 && (
+        <section>
+          <h3>Strategic Advice</h3>
+          {result.strategicAdvices.map((r, i) => (
+            <div key={i} className="result-card"
+              style={{ borderLeft: '4px solid #e74c3c' }}>
+              <div className="result-header">
+                <span className="priority-badge"
+                  style={{ background: '#e74c3c' }}>
+                  HIGH
+                </span>
+                <span className="result-type">{r.adviceType.replace(/_/g, ' ')}</span>
+              </div>
+              <p className="result-explanation">{r.explanation}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
       {result.recommendations.length > 0 && (
         <section>
           <h3>Recommendations</h3>
