@@ -107,7 +107,7 @@ rule "FC-6 Detect Opponent Near Builder"
         Milestone(type == MilestoneType.BUILDER, claimed == false)
         not Insight(playerId == $pid, type == InsightType.OPPONENT_NEAR_BUILDER)
     then
-        insert(new Insight($pid, InsightType.OPPONENT_NEAR_GARDENER,
+        insert(new Insight($pid, InsightType.OPPONENT_NEAR_BUILDER,
             "Opponent " + $oid + " has " + $buildingTags + " building tags - Builder milestone endangered"));
         System.out.println("[FC-6] Insight: OPPONENT_NEAR_BUILDER, opponent has " + $buildingTags + " building tags");
 end

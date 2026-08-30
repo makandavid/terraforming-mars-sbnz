@@ -1,8 +1,10 @@
 package com.tm.service;
 
+import com.tm.dto.PlayedCardDto;
 import com.tm.entity.CardEntity;
 import com.tm.enums.CardTag;
 import com.tm.facts.CardInHand;
+import com.tm.facts.PlayedCard;
 import com.tm.repository.CardRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,28 @@ public class CardService {
 
     public CardService(CardRepository cardRepository) {
         this.cardRepository = cardRepository;
+    }
+
+    public PlayedCard resolvePlayedCard(PlayedCardDto playedCardDto) {
+        CardEntity entity = cardRepository.findByName(playedCardDto.getName())
+                .orElseThrow(() -> new RuntimeException(
+                        "Card not found in catalog: " + playedCardDto.getName()
+                ));
+
+        List<CardTag> tags = playedCardDto.getTags().stream()
+                .map(CardTag::valueOf)
+                .toList();
+
+        return new PlayedCard(
+                System.nanoTime(),
+                playedCardDto.getName(),
+                tags,
+                entity.getCost(),
+                entity.getVpValue(),
+                "",
+                playedCardDto.getPlayerId(),
+                playedCardDto.getGenerationPlayed()
+        );
     }
 
     public CardInHand resolveCardInHand(String cardName, long playerId) {

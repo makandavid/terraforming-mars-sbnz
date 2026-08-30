@@ -42,17 +42,7 @@ public class GameStateMapper {
         }
 
         for (PlayedCardDto dto : request.getPlayedCards()) {
-            List<CardTag> tags = dto.getTags().stream()
-                    .map(CardTag::valueOf)
-                    .toList();
-            facts.add(new PlayedCard(
-                    System.nanoTime(),
-                    dto.getName(),
-                    tags,
-                    0, 0, "",
-                    dto.getPlayerId(),
-                    dto.getGenerationPlayed()
-            ));
+            facts.add(cardService.resolvePlayedCard(dto));
         }
 
         long currentPlayerId = request.getCurrentPlayer().getId();
